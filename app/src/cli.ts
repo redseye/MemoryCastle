@@ -17,12 +17,12 @@ export async function runCli(argv: string[]): Promise<number> {
     const name = nameIdx !== -1 ? rest[nameIdx + 1] : undefined;
     const dir = rest.filter((_, i) => nameIdx === -1 || (i !== nameIdx && i !== nameIdx + 1))[0];
     if (!dir) {
-      console.error('用法：memorycastle init <專案根目錄> [--name "專案名稱"]');
+      console.error('Usage: memorycastle init <project-root> [--name "Project Name"] ／ 用法：memorycastle init <專案根目錄> [--name "專案名稱"]');
       return 1;
     }
     try {
       const castleDir = await initCastle(dir, name);
-      console.log(`城堡腳手架完成：${castleDir}`);
+      console.log(`Castle scaffold complete: ${castleDir} ／ 城堡腳手架完成`);
       return 0;
     } catch (err) {
       if (err instanceof CastleExistsError) {
@@ -38,7 +38,7 @@ export async function runCli(argv: string[]): Promise<number> {
     const apply = rest.includes('--apply');
     const dir = rest.filter((a) => a !== '--apply')[0];
     if (!dir) {
-      console.error('用法：memorycastle import <專案根目錄> [--apply]');
+      console.error('Usage: memorycastle import <project-root> [--apply] ／ 用法：memorycastle import <專案根目錄> [--apply]');
       return 1;
     }
     try {
@@ -49,26 +49,26 @@ export async function runCli(argv: string[]): Promise<number> {
         counts = summary.counts;
         warnings = summary.warnings;
         console.log(
-          `匯入完成：keep ${counts.keep} 筆、chronicle ${counts.chronicle} 筆、` +
-            `routes ${counts.routes} 條、rooms ${counts.rooms} 間、archive ${counts.archiveMonths} 月`,
+          `Import complete: keep ${counts.keep}, chronicle ${counts.chronicle}, ` +
+            `routes ${counts.routes}, rooms ${counts.rooms}, archive ${counts.archiveMonths} months ／ 匯入完成`,
         );
-        console.log(`已搬移 ${summary.movedFiles.length} 個原始檔案至 archive/markdown-original/`);
+        console.log(`Moved ${summary.movedFiles.length} original files to archive/markdown-original/ ／ 已搬移`);
       } else {
         const preview = await importPreview(dir);
         counts = preview.counts;
         warnings = preview.warnings;
         console.log(
-          `匯入預覽：keep ${counts.keep} 筆、chronicle ${counts.chronicle} 筆、` +
-            `routes ${counts.routes} 條、rooms ${counts.rooms} 間、archive ${counts.archiveMonths} 月`,
+          `Import preview: keep ${counts.keep}, chronicle ${counts.chronicle}, ` +
+            `routes ${counts.routes}, rooms ${counts.rooms}, archive ${counts.archiveMonths} months ／ 匯入預覽`,
         );
       }
       if (warnings.length > 0) {
-        console.log(`警告 ${warnings.length} 項：`);
+        console.log(`Warnings: ${warnings.length} ／ 警告 ${warnings.length} 項：`);
         for (const w of warnings) {
           console.log(`  ${w.file}:${w.line} — ${w.reason}：${w.text}`);
         }
       } else {
-        console.log('警告 0 項');
+        console.log('Warnings: 0 ／ 警告 0 項');
       }
       return 0;
     } catch (err) {
@@ -99,16 +99,16 @@ export async function runCli(argv: string[]): Promise<number> {
       console.error(err instanceof Error ? err.message : String(err));
       return 1;
     }
-    console.log(`memorycastle API 已啟動：${server.url}`);
+    console.log(`memorycastle API started: ${server.url} ／ 已啟動`);
     if (server.servingUi) {
-      console.log(`Web UI：http://127.0.0.1:${server.port}/`);
+      console.log(`Web UI: http://127.0.0.1:${server.port}/`);
     } else {
-      console.log('（未找到已建置的 Web UI，僅提供 API。執行 npm run web:build 後重啟即可一併提供 UI。）');
+      console.log('No built Web UI found — serving API only. Run npm run web:build then restart to serve the UI as well. ／ 未找到已建置的 Web UI，僅提供 API；執行 npm run web:build 後重啟即可一併提供 UI');
     }
 
     return new Promise<number>((resolveCode) => {
       const shutdown = async () => {
-        console.log('正在關閉伺服器…');
+        console.log('Shutting down the server… ／ 正在關閉伺服器');
         await server.close();
         resolveCode(0);
       };
@@ -117,7 +117,7 @@ export async function runCli(argv: string[]): Promise<number> {
     });
   }
 
-  console.error('用法：memorycastle init <dir> [--name X] | serve | import <dir>');
+  console.error('Usage: memorycastle init <dir> [--name X] | serve | import <dir> ／ 用法：memorycastle init <dir> [--name X] | serve | import <dir>');
   return 1;
 }
 

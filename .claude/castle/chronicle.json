@@ -82,6 +82,26 @@
         "decision",
         "milestone"
       ]
+    },
+    {
+      "id": "gh0pubv4",
+      "date": "2026-07-10",
+      "confidence": "high",
+      "source": "session",
+      "fact": "狀態：公開發布完成——public repo https://github.com/redseye/MemoryCastle（乾淨單一初始 commit）、Release v0.4.0 附 MemoryCastle-0.4.0-portable.exe、marketplace.json 線上抓取驗證通過；原私有 mirror 改名 MemoryCastle-dev（本機 origin 已改指、含完整開發史，永不轉 public）。／決定：app 版本號對齊 0.4.0；README 補 plugin 安裝節（/plugin marketplace add redseye/MemoryCastle → /plugin install memory-castle@memorycastle）。／下一步：可選項未做——CLI 執行期訊息雙語化（castle-init.mjs 提示全繁中，國際使用者看不懂）；公開後 chronicle 新記錄只進 dev、public 為發布快照，下次 release 再同步。 #handover",
+      "tags": [
+        "handover"
+      ]
+    },
+    {
+      "id": "bi2lng7q",
+      "date": "2026-07-10",
+      "confidence": "high",
+      "source": "session",
+      "fact": "狀態：CLI 表層訊息雙語化出貨（castle-init.mjs＋app cli.ts，格式「英文 ／ 繁中」，plugin 副本經 build-plugin.mjs 重生成，198 測試綠）；上一筆 handover 的可選項已完成。／決定：core 錯誤字串與 Web UI 維持繁中不動（跨層共用，另案處理）。／下一步：無待決事項；public 與 dev 兩倉將同步此變更。 #handover",
+      "tags": [
+        "handover"
+      ]
     }
   ]
 }
