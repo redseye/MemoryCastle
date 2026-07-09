@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "routes": [
+    {
+      "name": "session-start",
+      "occasion": "每個 session 開工時走",
+      "stops": [
+        {
+          "target": "keep",
+          "read": "all"
+        },
+        {
+          "target": "rooms-by-locus",
+          "read": "all"
+        }
+      ]
+    },
+    {
+      "name": "before-release",
+      "occasion": "使用者說 release／deploy／publish／上線／對外發布 時走",
+      "stops": [
+        {
+          "target": "keep",
+          "read": "section:constraints"
+        }
+      ]
+    },
+    {
+      "name": "patrol",
+      "occasion": "巡查觸發時走（architecture §4）",
+      "stops": [
+        {
+          "target": "chronicle",
+          "read": "all"
+        },
+        {
+          "target": "all-rooms",
+          "read": "all"
+        },
+        {
+          "target": "keep",
+          "read": "all"
+        },
+        {
+          "target": "routes",
+          "read": "all"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "memorycastle",
+  "description": "MemoryCastle — file-based project memory for Claude Code, built on the method of loci.",
+  "owner": {
+    "name": "George Lin"
+  },
+  "plugins": [
+    {
+      "name": "memory-castle",
+      "source": "./plugins/memory-castle",
+      "description": "File-based project memory for Claude Code — spatial recall, admission gate, and consolidation patrol."
+    }
+  ]
+}

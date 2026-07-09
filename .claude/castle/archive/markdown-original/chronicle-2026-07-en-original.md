@@ -1,0 +1,19 @@
+# Chronicle — MemoryCastle
+
+> Append-only episodic log. One line per event; never edit old lines. Swept to archive/chronicle-YYYY-MM.md by the consolidation patrol (trigger: 20 unswept entries — see architecture §4).
+> Admission gate before every write (§3): novel (not derivable from repo/git) + reusable (a future session needs it) + one verifiable line with a why. Never: secrets, tokens, third-party personal data.
+> Session handover form: `- [date | conf:high | src:session] state: X / decided: Y / next: Z #handover`
+
+- [2026-07-05 | conf:high | src:castle-init] Castle initialized for MemoryCastle. #meta
+- [2026-07-06 | conf:high | src:user] Founding decisions (4): methodology-first then SDK; first host = Claude Code native; tech stack = Markdown + zero-dep Node for v0.1, TypeScript for SDK phase; milestone 1 = design doc + skeleton + minimal working instance. #decision
+- [2026-07-06 | conf:high | src:session] Chose "admission gate over store-everything" as the core differentiator — the measured problem is trusting memory, not finding it (architecture §8). #decision
+- [2026-07-06 | conf:high | src:session] Self-hosting chosen as the minimal working instance: cheapest real demo, and forces the framework to eat its own cooking. #decision
+- [2026-07-06 | conf:high | src:session] castle-init.mjs stamped UTC dates via toISOString; fixed to local dates via toLocaleDateString('sv') — Taiwan (UTC+8) would mislabel entries near midnight. #lesson
+- [2026-07-06 | conf:high | src:session] state: milestone 1 files landed (architecture, 3 templates, skill, init script, self-hosted instance) / decided: see #decision lines above / next: README, then verifier acceptance run. #handover
+- [2026-07-06 | conf:high | src:castle-verify] Milestone 1 accepted 6/6 by independent verifier (files complete, instance passes §2 format strictly, budgets consistent across 5 files, init script live-tested across a UTC date boundary, first-step test passed). One gap found and fixed: SKILL.md now defines all three conf levels inline. #milestone
+- [2026-07-06 | conf:high | src:session] state: v0.1 complete and accepted / decided: nothing pending / next: user picks — dogfood in a real project (copy skill/ to ~/.claude/skills/castle/ and init a work repo), or review architecture.md before wider use. #handover
+- [2026-07-06 | conf:high | src:user] User set the vision: the prototype is the real method of loci (spatial retrieval as protagonist); memory belongs to the project; execution by model self-discipline; the v0.1 trust problem still worth solving. #decision
+- [2026-07-06 | conf:high | src:user] v0.2 spatial edition approved and shipped: rooms re-anchored from topics to loci (place-membership is mechanically decidable); routes added as the completeness guarantee (mandatory 巡行 N/N report); adjacent/emblem lines; v0.1 trust mechanics kept intact. #decision #milestone
+- [2026-07-06 | conf:high | src:session] state: v0.2 files landed (architecture, room/routes/keep templates, skill, init script, this instance) / decided: see #decision above / next: verifier acceptance, then user picks the first dogfood repo. #handover
+- [2026-07-06 | conf:high | src:castle-verify-v02] v0.2 accepted 6/7; the one FAIL was a real contradiction the process caught: keep.md still said "automation opt-in v0.2" after the roadmap renumbered it to v0.3 — fixed by rewording to version-agnostic "a later version (architecture §9)". Secondary: instance before-release trigger words aligned to the skill's superset. Contradiction-resolution rule (§4.3) applied as designed. #milestone #lesson
+- [2026-07-06 | conf:high | src:session] state: v0.2 complete, accepted, contradictions resolved / decided: nothing pending / next: user picks the first dogfood repo (copy skill/ to ~/.claude/skills/castle/, run castle-init on a real project). #handover

@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "slug": "web-ui-rest-api-llm",
+  "name": "應用程式（Web UI／REST API／LLM 轉接層）",
+  "locus": [
+    "app/**"
+  ],
+  "adjacent": [],
+  "emblem": null,
+  "createdAt": "2026-07-08",
+  "records": [
+    {
+      "id": "q2rd13ii",
+      "date": "2026-07-08",
+      "confidence": "high",
+      "source": "patrol",
+      "fact": "v0.4 已產品化出貨（app/ 本機工具含 Web UI、REST API、三家 LLM adapter、JSON 儲存與 markdown 匯入器，155 測試全綠、六里程碑獨立驗收），並依使用者決策將真城堡遷移為 JSON（原 .md 備份於 archive/markdown-original/）、architecture §9 標註落地、預算語意統一為記錄筆數且成果 commit 不需單號，下一步待使用者填入真 API key 做三家 adapter 的 live smoke 驗證（含 Gemini 無效金鑰錯誤碼）。",
+      "tags": [
+        "milestone",
+        "decision",
+        "handover"
+      ]
+    },
+    {
+      "id": "e9xdesrv",
+      "date": "2026-07-09",
+      "confidence": "high",
+      "source": "user",
+      "fact": "Electron 桌面版 exe 是本專案預設的長駐伺服器（7420 埠、attach-or-own，生命週期由使用者掌控）——session 中不要自己起 memorycastle serve 或 vite dev 長駐，session 結束行程就斷、UI 會莫名失聯；一次性子命令（build／test／init／import）可用。",
+      "tags": [
+        "workflow",
+        "constraint"
+      ]
+    },
+    {
+      "id": "a2sarpkg",
+      "date": "2026-07-09",
+      "confidence": "high",
+      "source": "session",
+      "fact": "portable exe 以 asar 內嵌 dist/**——改前端或伺服器程式後必須 npm run dist:electron 重打包才會生效（光 build:all 不夠）；舊 exe 開著會鎖住輸出檔，打包停在 waiting for unlock 直到使用者關閉桌面版。",
+      "tags": [
+        "build",
+        "lesson"
+      ]
+    }
+  ]
+}

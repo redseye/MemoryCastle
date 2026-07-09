@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "sections": {
+    "identity": [
+      {
+        "id": "x7gqn885",
+        "date": "2026-07-06",
+        "confidence": "high",
+        "source": "user",
+        "fact": "MemoryCastle 是建立在記憶宮殿法（method of loci）上的檔案式 AI 記憶框架：房間錨定在專案地形的位置上、路線保證完整回想、城門／巡查／遺忘機制讓記憶可信。",
+        "tags": [
+          "identity"
+        ]
+      },
+      {
+        "id": "06bbjkl6",
+        "date": "2026-07-06",
+        "confidence": "high",
+        "source": "user",
+        "fact": "策略：方法論先行、SDK（TypeScript）後行；第一宿主是 Claude Code、由作者親自 dogfood；記憶屬於專案（團隊共享）、執行靠模型自律（不用 hook）。",
+        "tags": [
+          "identity"
+        ]
+      }
+    ],
+    "constraints": [
+      {
+        "id": "d3mauh5i",
+        "date": "2026-07-06",
+        "confidence": "high",
+        "source": "user",
+        "fact": "框架規格與 skill 以英文為權威；城堡實例檔案整份繁體中文（記憶宮殿是給人看的）；對使用者的回覆一律繁體中文。",
+        "tags": [
+          "constraint"
+        ]
+      },
+      {
+        "id": "a4oobpwg",
+        "date": "2026-07-06",
+        "confidence": "high",
+        "source": "architecture§8",
+        "fact": "方法論階段不用 hook／daemon——自動化是之後版本的選配（architecture §9）且必須成功時靜默（教訓：devteam hook 稅實測吃掉 34-52% context）。",
+        "tags": [
+          "constraint"
+        ]
+      },
+      {
+        "id": "r8v0b8r3",
+        "date": "2026-07-06",
+        "confidence": "high",
+        "source": "architecture§3",
+        "fact": "城堡檔案視同團隊公開、可能進版控：永不寫入機密、token、第三方個資。",
+        "tags": [
+          "constraint"
+        ]
+      },
+      {
+        "id": "pigybfa5",
+        "date": "2026-07-08",
+        "confidence": "high",
+        "source": "user",
+        "fact": "使用者指示：castle 記錄內文全程使用繁體中文。既有英文記錄已翻譯為繁中；英文原文完整保存於 archive\\chronicle-2026-07-en-original.md。",
+        "tags": [
+          "decision"
+        ]
+      },
+      {
+        "id": "gglomkz2",
+        "date": "2026-07-08",
+        "confidence": "high",
+        "source": "user",
+        "fact": "使用者加碼指示：不只記錄行，生成的城堡檔案（keep／chronicle／routes／rooms）整份繁體中文——記憶宮殿是給人看的。模板、實例、腳本訊息全面改版；只有結構識別鍵（locus:、路線名、格式骨架、tag）保持英文。",
+        "tags": [
+          "decision"
+        ]
+      }
+    ],
+    "core": [
+      {
+        "id": "5cti290q",
+        "date": "2026-07-06",
+        "confidence": "high",
+        "source": "session",
+        "fact": "本專案自舉：它自己的記憶就在 .claude\\castle\\——把這個實例當參考範本，保持示範品質。",
+        "tags": [
+          "meta"
+        ]
+      }
+    ]
+  }
+}

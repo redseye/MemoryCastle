@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "slug": "room-hzw99tyq",
+  "name": "專案收尾室",
+  "locus": [
+    "M9 出貨",
+    "開發流程總結",
+    "repo 遷移",
+    "最終交接"
+  ],
+  "adjacent": [],
+  "emblem": null,
+  "createdAt": "2026-07-08",
+  "records": [
+    {
+      "id": "vuk6fm6h",
+      "date": "2026-07-08",
+      "confidence": "high",
+      "source": "patrol",
+      "fact": "MemoryCastle 產品化收尾：M9 原生資料夾選擇器（伺服器端 FolderBrowserDialog，pwsh/STA/TopMost）出貨並人工測試通過，教訓是中文文字須經 UTF-8 暫存檔傳遞以免 cp950 亂碼；九里程碑逐一派工＋fresh-context verifier 獨立驗收的開發模式跑完，197 測試全綠且曾抓出 M4/M5 兩個實作 agent 自己沒發現的真 bug；專案已獨立遷至 D:\\Project\\MemoryCastle 新 git repo，並同步更新 config.json 與 skill 絕對路徑；下一步是 chronicle 已達巡查門檻，待於 UI 執行首次正式巡查。",
+      "tags": [
+        "milestone",
+        "lesson",
+        "process",
+        "decision",
+        "handover"
+      ]
+    }
+  ]
+}

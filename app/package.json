@@ -1,0 +1,63 @@
+{
+  "name": "memorycastle",
+  "version": "0.4.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "bin": {
+    "memorycastle": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:all": "npm run build && npm run web:build",
+    "build:electron": "tsc -p electron/tsconfig.json",
+    "test": "vitest run",
+    "web:dev": "vite",
+    "web:build": "vite build",
+    "web:typecheck": "tsc -p web/tsconfig.json --noEmit",
+    "electron:dev": "npm run build:all && npm run build:electron && electron .",
+    "dist:electron": "npm run build:all && npm run build:electron && electron-builder --win portable"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
+    "@google/genai": "^2.10.0",
+    "@hono/node-server": "^2.0.8",
+    "hono": "^4.12.28",
+    "openai": "^6.45.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "electron": "^43.0.0",
+    "electron-builder": "26.13.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "vitest": "^2.1.0"
+  },
+  "build": {
+    "appId": "app.memorycastle.desktop",
+    "productName": "MemoryCastle",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "forceCodeSigning": false,
+    "win": {
+      "target": ["portable"]
+    },
+    "portable": {
+      "artifactName": "MemoryCastle-${version}-portable.exe"
+    }
+  }
+}
