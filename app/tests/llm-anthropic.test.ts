@@ -35,6 +35,21 @@ describe('anthropic adapter', () => {
     expect(params.output_config).toEqual({ format: { type: 'json_schema', schema: SCHEMA } });
   });
 
+  it('a shared context goes first in system as its own block, marked cache_control ephemeral (v0.5)', async () => {
+    const create = vi.fn().mockResolvedValue(textResponse('{"ok":true}'));
+    const client: AnthropicClientLike = { messages: { create }, models: { list: vi.fn() } };
+    const service = createAnthropicService({ apiKey: 'sk-test', model: 'claude-sonnet-5' }, client);
+
+    await service.judge<{ ok: boolean }>({ context: 'castle map', system: 'sys', user: 'usr', schema: SCHEMA });
+
+    const params = create.mock.calls[0][0];
+    expect(params.system).toEqual([
+      { type: 'text', text: 'castle map', cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: 'sys' },
+    ]);
+    expect(params.messages).toEqual([{ role: 'user', content: 'usr' }]);
+  });
+
   it('retries once with the validation error appended, then succeeds', async () => {
     const create = vi
       .fn()

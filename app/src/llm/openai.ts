@@ -13,12 +13,14 @@
 import OpenAI from 'openai';
 import { InvalidApiKeyError } from '../server/llm-seam.js';
 import type { JudgeTask, LlmService } from '../server/llm-seam.js';
-import { judgeWithRetry } from './judge-helpers.js';
+import { judgeWithRetry, systemWithContext } from './judge-helpers.js';
 
 export interface OpenAiClientLike {
   responses: {
+    // Second arg mirrors the SDK's RequestOptions ({ signal } is the field
+    // patrol cancel needs — verified against openai/internal/request-options.d.ts).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    create(params: any): Promise<any>;
+    create(params: any, options?: any): Promise<any>;
   };
   models: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,7 +67,7 @@ export function createOpenAiService(config: OpenAiServiceConfig, clientOverride?
     async judge<T>(task: JudgeTask<T>): Promise<T> {
       const buildParams = (input: string) => ({
         model: config.model,
-        instructions: task.system,
+        instructions: systemWithContext(task),
         input,
         max_output_tokens: task.maxTokens,
         text: {
@@ -80,7 +82,7 @@ export function createOpenAiService(config: OpenAiServiceConfig, clientOverride?
 
       const callOnce = async () => {
         try {
-          const response = await client.responses.create(buildParams(task.user));
+          const response = await client.responses.create(buildParams(task.user), { signal: task.signal });
           return extractText(response);
         } catch (err) {
           if (isUnauthorized(err)) throw new InvalidApiKeyError('openai');
@@ -91,7 +93,7 @@ export function createOpenAiService(config: OpenAiServiceConfig, clientOverride?
       const callRetry = async (previousRawOutput: string, validationError: string) => {
         const retryInput = `${task.user}\n\n--- Your previous output ---\n${previousRawOutput}\n--- End previous output ---\nThat output failed JSON schema validation: ${validationError}\nReturn corrected JSON that matches the schema exactly, with no extra commentary.`;
         try {
-          const response = await client.responses.create(buildParams(retryInput));
+          const response = await client.responses.create(buildParams(retryInput), { signal: task.signal });
           return extractText(response);
         } catch (err) {
           if (isUnauthorized(err)) throw new InvalidApiKeyError('openai');

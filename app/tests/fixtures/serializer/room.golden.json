@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "slug": "web-ui-rest-api-llm",
+  "name": "應用程式（Web UI／REST API）",
+  "locus": ["app/**","app/web/**"],
+  "adjacent": [],
+  "emblem": null,
+  "createdAt": "2026-07-08",
+  "records": [
+    {"id":"ab12cd34","date":"2026-07-08","confidence":"high","source":"chronicle:x1,x2","fact":"第一條事實","tags":["app"]},
+    {"id":"ef56gh78","date":"2026-07-09","confidence":"med","source":"user","fact":"含 \"引號\" 與 \\ 的事實","tags":["a","b"],"routeWarning":"before-release","verifiedAt":"2026-10-28","extra":"kept"}
+  ]
+}

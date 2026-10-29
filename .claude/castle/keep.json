@@ -2,90 +2,20 @@
   "schema": 1,
   "sections": {
     "identity": [
-      {
-        "id": "x7gqn885",
-        "date": "2026-07-06",
-        "confidence": "high",
-        "source": "user",
-        "fact": "MemoryCastle 是建立在記憶宮殿法（method of loci）上的檔案式 AI 記憶框架：房間錨定在專案地形的位置上、路線保證完整回想、城門／巡查／遺忘機制讓記憶可信。",
-        "tags": [
-          "identity"
-        ]
-      },
-      {
-        "id": "06bbjkl6",
-        "date": "2026-07-06",
-        "confidence": "high",
-        "source": "user",
-        "fact": "策略：方法論先行、SDK（TypeScript）後行；第一宿主是 Claude Code、由作者親自 dogfood；記憶屬於專案（團隊共享）、執行靠模型自律（不用 hook）。",
-        "tags": [
-          "identity"
-        ]
-      }
+      {"id":"x7gqn885","date":"2026-07-06","confidence":"high","source":"user","fact":"MemoryCastle 是建立在記憶宮殿法（method of loci）上的檔案式 AI 記憶框架：房間錨定在專案地形的位置上、路線保證完整回想、城門／巡查／遺忘機制讓記憶可信。","tags":["identity"]},
+      {"id":"06bbjkl6","date":"2026-07-06","confidence":"high","source":"user","fact":"策略：方法論先行、SDK（TypeScript）後行；第一宿主是 Claude Code、由作者親自 dogfood；記憶屬於專案（團隊共享）、執行靠模型自律（不用 hook）。","tags":["identity"]}
     ],
     "constraints": [
-      {
-        "id": "d3mauh5i",
-        "date": "2026-07-06",
-        "confidence": "high",
-        "source": "user",
-        "fact": "框架規格與 skill 以英文為權威；城堡實例檔案整份繁體中文（記憶宮殿是給人看的）；對使用者的回覆一律繁體中文。",
-        "tags": [
-          "constraint"
-        ]
-      },
-      {
-        "id": "a4oobpwg",
-        "date": "2026-07-06",
-        "confidence": "high",
-        "source": "architecture§8",
-        "fact": "方法論階段不用 hook／daemon——自動化是之後版本的選配（architecture §9）且必須成功時靜默（教訓：devteam hook 稅實測吃掉 34-52% context）。",
-        "tags": [
-          "constraint"
-        ]
-      },
-      {
-        "id": "r8v0b8r3",
-        "date": "2026-07-06",
-        "confidence": "high",
-        "source": "architecture§3",
-        "fact": "城堡檔案視同團隊公開、可能進版控：永不寫入機密、token、第三方個資。",
-        "tags": [
-          "constraint"
-        ]
-      },
-      {
-        "id": "pigybfa5",
-        "date": "2026-07-08",
-        "confidence": "high",
-        "source": "user",
-        "fact": "使用者指示：castle 記錄內文全程使用繁體中文。既有英文記錄已翻譯為繁中；英文原文完整保存於 archive\\chronicle-2026-07-en-original.md。",
-        "tags": [
-          "decision"
-        ]
-      },
-      {
-        "id": "gglomkz2",
-        "date": "2026-07-08",
-        "confidence": "high",
-        "source": "user",
-        "fact": "使用者加碼指示：不只記錄行，生成的城堡檔案（keep／chronicle／routes／rooms）整份繁體中文——記憶宮殿是給人看的。模板、實例、腳本訊息全面改版；只有結構識別鍵（locus:、路線名、格式骨架、tag）保持英文。",
-        "tags": [
-          "decision"
-        ]
-      }
+      {"id":"8zkcihx3","date":"2026-07-08","confidence":"high","source":"user","fact":"語言：框架規格與 skill 以英文為權威；城堡實例檔案（keep／chronicle／routes／rooms）整份繁體中文，只有結構識別鍵（JSON 鍵、locus、路線名、target/read、tag）保持英文；回覆使用者一律繁中。英文原文存於 archivemarkdown-originalchronicle-2026-07-en-original.md。","tags":["constraint"],"verifiedAt":"2026-10-28"},
+      {"id":"a4oobpwg","date":"2026-07-06","confidence":"high","source":"architecture§8","fact":"方法論階段不用 hook／daemon——自動化是之後版本的選配（architecture §9）且必須成功時靜默（教訓：devteam hook 稅實測吃掉 34-52% context）。","tags":["constraint"],"verifiedAt":"2026-10-28"},
+      {"id":"r8v0b8r3","date":"2026-07-06","confidence":"high","source":"architecture§3","fact":"城堡檔案視同團隊公開、可能進版控：永不寫入機密、token、第三方個資。","tags":["constraint"],"verifiedAt":"2026-10-28"},
+      {"id":"n52c8g6h","date":"2026-07-09","confidence":"high","source":"chronicle:pw4kq7se","fact":"記錄提及外部客戶或專案一律用去識別代稱，handover 也不例外：公開前盤查曾在 chronicle 的 handover 抓到客戶真名（違反「不寫第三方個資」約束）。","tags":["constraint","lesson"],"verifiedAt":"2026-10-28"},
+      {"id":"rxjgcgfr","date":"2026-10-28","confidence":"high","source":"chronicle:y6s2nt0t","fact":"public repo redseye/MemoryCastle 只當發布快照（乾淨初始 commit，下次 release 才同步）；本機 origin＝MemoryCastle-dev，含完整開發史與城堡新記錄，永不轉 public。","tags":["constraint","release"],"verifiedAt":"2026-10-28"}
     ],
     "core": [
-      {
-        "id": "5cti290q",
-        "date": "2026-07-06",
-        "confidence": "high",
-        "source": "session",
-        "fact": "本專案自舉：它自己的記憶就在 .claude\\castle\\——把這個實例當參考範本，保持示範品質。",
-        "tags": [
-          "meta"
-        ]
-      }
+      {"id":"5cti290q","date":"2026-07-06","confidence":"high","source":"session","fact":"本專案自舉：它自己的記憶就在 .claude\\castle\\——把這個實例當參考範本，保持示範品質。","tags":["meta"],"verifiedAt":"2026-10-28"},
+      {"id":"hrewxjst","date":"2026-07-09","confidence":"high","source":"chronicle:rz8n3vjc","fact":"plugin 版本號只寫在手維護的 plugins/memory-castle/.claude-plugin/plugin.json（build-plugin.mjs 不產生它），marketplace.json 的 entry 不重複寫；app 版本另在 app/package.json，發版時兩處一起改。","tags":["release"],"verifiedAt":"2026-10-28"},
+      {"id":"16xsil0x","date":"2026-07-08","confidence":"high","source":"chronicle:devnewhome","fact":"2026-07-08 以前的開發史在 ~/.claude repo：本 repo 於該日重新 git init、不帶舊歷史，舊記錄引用的 commit（c0d4053、70db2fc、a6fb918）要去那裡查。","tags":["git"],"verifiedAt":"2026-10-28"}
     ]
   }
 }

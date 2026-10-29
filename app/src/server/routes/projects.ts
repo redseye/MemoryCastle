@@ -9,7 +9,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { Hono } from 'hono';
 import { readConfig, registerProject, unregisterProject, writeConfig } from '../../config/index.js';
-import { castleDirOf, castleJsonPath, initCastle, openCastle } from '../../core/index.js';
+import { castleDirOf, castleJsonPath, countSincePatrol, initCastle, openCastle } from '../../core/index.js';
 import { HttpError } from '../http-errors.js';
 import { findProjectSync, openProjectCastle } from '../project-context.js';
 import { jsonBody } from '../request.js';
@@ -74,12 +74,21 @@ export function registerProjectRoutes(app: Hono): void {
     const config = await readConfig();
     const project = findProjectSync(config, c.req.param('id'));
     const castle = await openCastle(project.root); // NoCastleError -> 409 centrally
-    const [meta, counts, patrolDueResult] = await Promise.all([
+    const [meta, counts, patrolDueResult, entries] = await Promise.all([
       castle.getMeta(),
       castle.countBudgets(),
       castle.patrolDue(),
+      castle.chronicle.list(),
     ]);
-    return c.json({ budgets: meta.budgets, counts, patrolDue: patrolDueResult, lastPatrolAt: meta.lastPatrolAt });
+    // chronicleSinceLastPatrol sits beside the total: it is what patrol
+    // trigger 1 compares with chronicleSweep.
+    const chronicleSinceLastPatrol = countSincePatrol(entries, meta.lastPatrolAt);
+    return c.json({
+      budgets: meta.budgets,
+      counts: { ...counts, chronicleSinceLastPatrol },
+      patrolDue: patrolDueResult,
+      lastPatrolAt: meta.lastPatrolAt,
+    });
   });
 
   // Read-only, deterministic: the route definitions themselves (name/

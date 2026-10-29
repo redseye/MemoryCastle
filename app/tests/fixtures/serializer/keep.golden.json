@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "sections": {
+    "identity": [
+      {"id":"x7gqn885","date":"2026-07-06","confidence":"high","source":"user","fact":"身分事實","tags":["identity"]}
+    ],
+    "constraints": [],
+    "core": [
+      {"id":"k1","date":"2026-07-06","confidence":"low","source":"session","fact":"核心事實","tags":[]}
+    ]
+  }
+}

@@ -12,6 +12,15 @@ export class NoCastleError extends Error {
   }
 }
 
+// The newest handover never leaves the chronicle: chronicle/last-handover
+// reads it (architecture §4 step 4).
+export class SweepRefusedError extends Error {
+  constructor(id: string) {
+    super(`拒絕封存：${id} 是最新一筆交接，須留在編年史供 chronicle/last-handover 讀取。`);
+    this.name = 'SweepRefusedError';
+  }
+}
+
 export class NotFoundError extends Error {
   constructor(what: string) {
     super(`找不到：${what}`);

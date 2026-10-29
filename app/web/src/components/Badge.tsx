@@ -16,10 +16,6 @@ export function TagChip({ tag }: { tag: string }) {
   return <span className="chip">#{tag}</span>;
 }
 
-const STALENESS_DAYS_DEFAULT = 90;
-
-export function isStale(record: { date: string; confidence: Confidence }, stalenessDays = STALENESS_DAYS_DEFAULT): boolean {
-  if (record.confidence === 'low') return true;
-  const ageMs = Date.now() - new Date(record.date).getTime();
-  return ageMs > stalenessDays * 24 * 60 * 60 * 1000;
-}
+// The C3 rule (user-source exemption, verifiedAt) lives in staleness.ts so a
+// node test can hold it to src/core's isStale without rendering JSX.
+export { isStale } from '../staleness';

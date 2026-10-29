@@ -7,6 +7,7 @@ import { ChroniclePage } from './pages/ChroniclePage';
 import { RoomsPage } from './pages/RoomsPage';
 import { RoutesPage } from './pages/RoutesPage';
 import { PatrolPage } from './pages/PatrolPage';
+import { DoctorPage } from './pages/DoctorPage';
 import { ImportPage } from './pages/ImportPage';
 import { SettingsPage } from './pages/SettingsPage';
 
@@ -25,6 +26,8 @@ function PageBody() {
       return <RoutesPage />;
     case 'patrol':
       return <PatrolPage />;
+    case 'doctor':
+      return <DoctorPage />;
     case 'import':
       return <ImportPage />;
     case 'settings':

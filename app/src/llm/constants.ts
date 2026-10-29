@@ -27,7 +27,12 @@ export const CLI_BINARY_NAMES = {
   openai: 'codex',
 } as const;
 
-// Each judge()/verifyKey() call spawns a fresh CLI process — generous
-// headroom over a normal completion, since the CLI's own startup
-// (auth check, model resolution) adds latency an HTTP call doesn't have.
-export const CLI_CALL_TIMEOUT_MS = 120_000;
+// Each judge()/verifyKey() call spawns a fresh CLI process. 0 disables the
+// per-call timeout entirely (user decision 2026-07-13): a real patrol
+// contradiction check over a 54-record castle measured 162s of legitimate
+// work — the old 120s ceiling killed it 42s before the (valid) answer
+// landed, and any fixed ceiling loses to a growing castle. The patrol UI
+// shows elapsed seconds, so a genuinely wedged call is visible to the user.
+// Consequence: agy runaway containment now rests on --sandbox alone (see
+// cli.ts's file-level comment).
+export const CLI_CALL_TIMEOUT_MS = 0;

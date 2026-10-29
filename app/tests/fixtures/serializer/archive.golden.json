@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "month": "2026-07",
+  "entries": [
+    {"id":"c1","date":"2026-07-06","confidence":"med","source":"session","fact":"已升級的條目","tags":["lesson"],"sweptAt":"2026-10-28","promotedTo":"web-ui-rest-api-llm"}
+  ]
+}

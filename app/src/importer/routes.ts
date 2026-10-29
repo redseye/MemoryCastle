@@ -2,16 +2,21 @@
 // (tolerating em-dash or plain-hyphen separators — the route name itself is
 // matched as a single non-space token so internal hyphens like
 // "session-start" are never mistaken for the separator), followed by
-// numbered stop lines mapped onto the target/read vocabulary. Stop text that
+// numbered stop lines mapped onto the target/read vocabulary. A stop that
+// carries an explicit backticked `target/read` token (the v0.5 templates do,
+// e.g. `patrol-check/due`, `room:web/route-warnings`) is taken verbatim;
+// older files fall back to the Chinese keyword mapping below. Stop text that
 // can't be mapped keeps its original text in `note` and is also reported as
-// a warning.
+// a warning, as is an explicit token outside the walk whitelist.
 
 import type { RouteDef, RouteStop } from '../core/types.js';
+import { invalidStopReason } from '../core/walk.js';
 import type { ImportWarning } from './types.js';
 import { isBlank, isCommentLine, splitLines } from './line-helpers.js';
 
 const ROUTE_HEADING_RE = /^##\s*route:\s*(\S+)\s*[—-]\s*(.+)$/;
 const STOP_RE = /^(\d+)\.\s*(.+)$/;
+const STOP_TOKEN_RE = /`([a-z][a-z-]*(?::[^\s`/]+)?)\/([a-z][a-z-]*(?::[a-z-]+)?)`/;
 
 export interface KnownRoom {
   slug: string;
@@ -68,6 +73,15 @@ export function parseRoutesMd(content: string, file = 'routes.md', knownRooms: K
         return;
       }
       const stopText = stopMatch[2];
+      const token = STOP_TOKEN_RE.exec(stopText);
+      if (token) {
+        const stop: RouteStop = { target: token[1], read: token[2] };
+        if (invalidStopReason(stop)) {
+          warnings.push({ file, line: lineNo, text: line, reason: 'route stop token outside the walk whitelist' });
+        }
+        current.stops.push(stop);
+        return;
+      }
       const { target, note } = detectTarget(stopText, knownRooms);
       const stop: RouteStop = { target, read: detectRead(stopText) };
       if (note !== undefined) {

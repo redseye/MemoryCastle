@@ -1,10 +1,12 @@
 // Room delete is yellow-level (confirm required); everything else is a plain
 // CRUD wrapper over castle.rooms — PATCH is how the UI fixes locus drift.
+// Record appends are budget-checked: a room at roomMax refuses with 409
+// over_budget unless the body carries override:true.
 
 import type { Hono } from 'hono';
 import { HttpError } from '../http-errors.js';
 import { openProjectCastle } from '../project-context.js';
-import { parseRecordInput, parseRoomInput, parseRoomPatch } from '../records-validate.js';
+import { checkAppendBudget, loadRecordRules, parseRecordInput, parseRoomInput, parseRoomPatch } from '../records-validate.js';
 import { jsonBody } from '../request.js';
 
 export function registerRoomRoutes(app: Hono): void {
@@ -37,8 +39,14 @@ export function registerRoomRoutes(app: Hono): void {
 
   app.post('/projects/:id/rooms/:slug/records', async (c) => {
     const castle = await openProjectCastle(c.req.param('id'));
-    const input = parseRecordInput(await jsonBody<Record<string, unknown>>(c));
-    const record = await castle.rooms.appendRecord(c.req.param('slug'), input); // NotFoundError -> 404 centrally
+    const slug = c.req.param('slug');
+    const body = await jsonBody<Record<string, unknown>>(c);
+    const input = parseRecordInput(body, await loadRecordRules(castle));
+    const room = await castle.rooms.get(slug);
+    if (!room) throw new HttpError(404, 'not_found', `找不到房間：${slug}`);
+    const meta = await castle.getMeta();
+    checkAppendBudget(body, room.records.length, meta.budgets.roomMax, `房間 ${slug}`);
+    const record = await castle.rooms.appendRecord(slug, input);
     return c.json(record, 201);
   });
 

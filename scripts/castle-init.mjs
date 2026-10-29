@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // castle-init.mjs — scaffold a MemoryCastle instance into a target project.
 // Usage: node castle-init.mjs <project-root> [--name "Project Name"]
-// Zero dependencies. Refuses to overwrite an existing castle. UTF-8 throughout.
+// Zero dependencies. Refuses to overwrite an existing castle, markdown or JSON. UTF-8 throughout.
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, resolve, basename, dirname } from 'node:path';
@@ -24,6 +24,10 @@ if (!existsSync(targetRoot)) {
 }
 
 const castleDir = join(targetRoot, '.claude', 'castle');
+if (existsSync(join(castleDir, 'keep.json'))) {
+  console.error(`A JSON castle already exists here: ${castleDir} (keep.json) — refusing to scaffold markdown files beside it; operate on its JSON files instead (architecture §2). ／ 此處已有 JSON 城堡（keep.json），拒絕在旁建立 markdown 檔；請直接操作其 JSON 檔`);
+  process.exit(2);
+}
 if (existsSync(join(castleDir, 'keep.md'))) {
   console.error(`A castle already exists here: ${castleDir} — refusing to overwrite. Delete the old castle first if you really mean to rebuild. ／ 此處已有城堡，拒絕覆蓋；確定重建請先刪除舊城堡`);
   process.exit(2);

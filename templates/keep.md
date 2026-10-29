@@ -1,7 +1,7 @@
 # Keep — {{PROJECT_NAME}}
 
 > 常駐載入的核心記憶，也是城堡的大廳——每條路線的第一站。硬預算：本說明區以下 30 筆記錄。修改本檔屬黃級（需使用者同意）。上次巡查：{{DATE}}。
-> 格式：`- [YYYY-MM-DD | conf | src] 一行事實 #tag`——見 MemoryCastle architecture §2。記錄一律繁體中文。
+> 格式：`- [YYYY-MM-DD | conf | src] 一行事實 #tag`；重新驗證過的記錄加第四欄 `| ver:YYYY-MM-DD`。事實不換行、最多 200 字——見 MemoryCastle architecture §2。記錄一律繁體中文。
 
 ## 身分（這個專案是什麼，最多 3 行）
 

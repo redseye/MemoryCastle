@@ -15,6 +15,9 @@ const CODE_MESSAGES: Record<string, string> = {
   invalid_json: '請求格式錯誤',
   root_not_found: '找不到該目錄',
   route_not_found: '找不到路線',
+  patrol_cancelled: '巡查已取消',
+  patrol_already_running: '此專案已有巡查正在執行中，請稍候再試',
+  patrol_not_running: '目前沒有正在執行的巡查工作',
 };
 
 export function describeError(error: Error | null): string | null {

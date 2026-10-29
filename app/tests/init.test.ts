@@ -24,6 +24,7 @@ describe('initCastle', () => {
       chronicleSweep: 20,
       patrolDays: 30,
       stalenessDays: 90,
+      factMaxChars: 200,
     });
     expect(meta.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(meta.lastPatrolAt).toBe(meta.createdAt);
@@ -39,6 +40,13 @@ describe('initCastle', () => {
       'session-start',
       'before-release',
       'patrol',
+    ]);
+    // Contract C5 default session-start order.
+    expect(routes.routes[0].stops).toEqual([
+      { target: 'patrol-check', read: 'due' },
+      { target: 'keep', read: 'all' },
+      { target: 'chronicle', read: 'last-handover' },
+      { target: 'rooms-by-locus', read: 'all' },
     ]);
 
     expect(existsSync(join(castleDir, 'rooms'))).toBe(true);

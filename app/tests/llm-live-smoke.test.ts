@@ -10,8 +10,8 @@ import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createApp } from '../src/server/index.js';
 import { createLlmService } from '../src/llm/factory.js';
-import { GATE_DECISION_SCHEMA } from '../src/llm/schemas.js';
-import { gateDecisionPrompt } from '../src/llm/prompts.js';
+import { REMEMBER_SCHEMA } from '../src/llm/schemas.js';
+import { rememberPrompt } from '../src/llm/prompts.js';
 import type { LlmProviderId } from '../src/config/index.js';
 import { cleanupTempDir, makeTempDir } from './helpers.js';
 
@@ -30,11 +30,13 @@ describe.skipIf(!cliSmokeEnabled)('LLM CLI-mode live smoke (real local CLI, env-
     await expect(llmService.verifyKey()).resolves.toBeUndefined();
   }, 60_000);
 
-  it('judge() runs a real gateDecision-shaped call end-to-end through the CLI adapter', async () => {
+  it('judge() runs a real remember-shaped (gate + distill) call end-to-end through the CLI adapter', async () => {
     const llmService = createLlmService({ provider: cliProvider, apiKey: '', model: cliModel ?? '', mode: 'cli' });
-    const { system, user } = gateDecisionPrompt({
+    const { system, user } = rememberPrompt({
       text: 'CI 上 npm ci 前必須先清 node_modules 快取，否則會用到跨平台不相容的 optional dependency 導致建置失敗',
       source: 'user',
+      factMaxChars: 200,
+      hits: [],
     });
 
     const result = await llmService.judge<{
@@ -43,15 +45,17 @@ describe.skipIf(!cliSmokeEnabled)('LLM CLI-mode live smoke (real local CLI, env-
       verifiable: boolean;
       secretRefusal: boolean;
       reason: string;
-    }>({ system, user, schema: GATE_DECISION_SCHEMA });
+      fact: string;
+    }>({ system, user, schema: REMEMBER_SCHEMA });
 
     expect(typeof result.novel).toBe('boolean');
     expect(typeof result.reusable).toBe('boolean');
     expect(typeof result.verifiable).toBe('boolean');
     expect(typeof result.secretRefusal).toBe('boolean');
     expect(typeof result.reason).toBe('string');
+    expect(typeof result.fact).toBe('string');
     // eslint-disable-next-line no-console
-    console.log('CLI-mode live smoke parsed gateDecision result:', JSON.stringify(result));
+    console.log('CLI-mode live smoke parsed remember result:', JSON.stringify(result));
   }, 60_000);
 });
 

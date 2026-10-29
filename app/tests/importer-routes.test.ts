@@ -1,8 +1,13 @@
 import { describe, it, expect } from 'vitest';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseRoutesMd } from '../src/importer/routes.js';
 
+const here = fileURLToPath(new URL('.', import.meta.url));
+
 describe('parseRoutesMd', () => {
-  it('parses the real MemoryCastle routes.md shape with 3 routes and 0 warnings', () => {
+  it('parses an old-style (pre-v0.5, keyword-only) routes.md with 3 routes and 0 warnings', () => {
     const md = `# Routes — MemoryCastle
 
 > 固定順序的巡行路線說明。
@@ -43,6 +48,37 @@ describe('parseRoutesMd', () => {
     // Stop 4 mentions routes.md AND a bare ⚠ (without 只讀) — must resolve to
     // target routes / read all, not route-warnings.
     expect(patrol.stops[3]).toEqual({ target: 'routes', read: 'all' });
+  });
+
+  it('honours the explicit `target/read` tokens of the v0.5 templates/routes.md, 0 warnings', async () => {
+    const template = await readFile(join(here, '..', '..', 'templates', 'routes.md'), 'utf8');
+    const md = template
+      .replace(/\{\{PROJECT_NAME\}\}/g, 'Demo')
+      .replace(/\{\{房間名\}\}/g, '後端服務')
+      .replace(/\{\{房間檔名\}\}/g, 'backend')
+      .replace(/\{\{房間清單[^}]*\}\}/g, '（還沒有）');
+    const result = parseRoutesMd(md, 'routes.md', [{ slug: 'backend', name: '後端服務' }]);
+    expect(result.warnings).toEqual([]);
+    expect(result.routes.map((r) => [r.name, r.stops.map((s) => `${s.target}/${s.read}`)])).toEqual([
+      ['session-start', ['patrol-check/due', 'keep/all', 'chronicle/last-handover', 'rooms-by-locus/all']],
+      ['before-release', ['keep/section:constraints', 'room:backend/route-warnings']],
+      ['patrol', ['chronicle/all', 'all-rooms/all', 'keep/all', 'routes/all']],
+    ]);
+    expect(result.routes.flatMap((r) => r.stops).some((s) => 'note' in s)).toBe(false);
+  });
+
+  it('an explicit token wins over the keyword mapping on the same line', () => {
+    // Keyword mapping alone would read this as keep/all (mentions keep.md).
+    const md = '## route: custom — x\n\n1. 先讀 keep.md 的話題 `chronicle/last-handover` — 只讀最新交接\n';
+    expect(parseRoutesMd(md).routes[0].stops).toEqual([{ target: 'chronicle', read: 'last-handover' }]);
+  });
+
+  it('imports an explicit token outside the walk whitelist as written, with a warning', () => {
+    const md = '## route: custom — x\n\n1. keep.md `keep/everything` — 錯字\n';
+    const result = parseRoutesMd(md);
+    expect(result.routes[0].stops).toEqual([{ target: 'keep', read: 'everything' }]);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0].reason).toBe('route stop token outside the walk whitelist');
   });
 
   it('tolerates a plain-hyphen route heading separator', () => {

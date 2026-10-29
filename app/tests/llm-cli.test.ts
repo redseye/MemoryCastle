@@ -7,7 +7,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { createCliService, getCliStatus, CliInvocationError, CliTimeoutError, type SpawnFn } from '../src/llm/cli.js';
+import { createCliService, getCliStatus, CliCancelledError, CliInvocationError, CliTimeoutError, type SpawnFn } from '../src/llm/cli.js';
 import { LlmNotConfiguredError } from '../src/server/llm-seam.js';
 
 const SCHEMA = {
@@ -224,6 +224,54 @@ describe('cli adapter: claude (anthropic)', () => {
 
     await expect(service.judge({ system: 'sys', user: 'usr', schema: SCHEMA })).rejects.toThrow(CliTimeoutError);
     expect(killed).toBe(true);
+  });
+
+  it('kills the child and rejects with CliCancelledError when the caller aborts mid-call', async () => {
+    let killed = false;
+    const controller = new AbortController();
+    // resolveBinaryFn/composePrompt run a few microtasks before execChild
+    // ever calls spawnFn — abort only once spawnFn has actually fired, so
+    // this exercises the "kill an already-spawned child" path rather than
+    // racing ahead into the "already aborted before spawn" one.
+    let resolveSpawned: (() => void) | undefined;
+    const spawned = new Promise<void>((resolve) => {
+      resolveSpawned = resolve;
+    });
+    const spawnFn: SpawnFn = vi.fn(() => {
+      const child = makeFakeChild();
+      child.kill = vi.fn(() => {
+        killed = true;
+      });
+      resolveSpawned?.();
+      // never emits 'close' — simulates a call still in flight when cancelled
+      return child;
+    });
+    const service = createCliService(
+      { provider: 'anthropic', apiKey: '', model: 'claude-sonnet-5', mode: 'cli' },
+      { spawnFn, resolveBinaryFn: resolveFound },
+    );
+
+    const pending = service.judge({ system: 'sys', user: 'usr', schema: SCHEMA, signal: controller.signal });
+    await spawned;
+    controller.abort();
+
+    await expect(pending).rejects.toThrow(CliCancelledError);
+    expect(killed).toBe(true);
+  });
+
+  it('rejects with CliCancelledError without spawning when the signal is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const spawnFn: SpawnFn = vi.fn(() => makeFakeChild());
+    const service = createCliService(
+      { provider: 'anthropic', apiKey: '', model: 'claude-sonnet-5', mode: 'cli' },
+      { spawnFn, resolveBinaryFn: resolveFound },
+    );
+
+    await expect(
+      service.judge({ system: 'sys', user: 'usr', schema: SCHEMA, signal: controller.signal }),
+    ).rejects.toThrow(CliCancelledError);
+    expect(spawnFn).not.toHaveBeenCalled();
   });
 });
 

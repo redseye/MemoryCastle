@@ -2,230 +2,35 @@
   "schema": 1,
   "month": "2026-07",
   "entries": [
-    {
-      "id": "2c8drdzs",
-      "date": "2026-07-05",
-      "confidence": "high",
-      "source": "castle-init",
-      "fact": "城堡初始化完成（MemoryCastle）。",
-      "tags": [
-        "meta"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "727obxd8",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "user",
-      "fact": "創始四決策：方法論先行、SDK 後行；第一宿主＝Claude Code 原生；技術棧＝v0.1 用 Markdown＋零依賴 Node、SDK 階段用 TypeScript；里程碑一＝設計文件＋骨架＋最小可運作實例。",
-      "tags": [
-        "decision"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "nhtb60cb",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "session",
-      "fact": "核心差異化選擇「准入閘勝過全存」——實測的問題是記憶信不信得過，不是找不找得到（architecture §8）。",
-      "tags": [
-        "decision"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "1ewb3z1z",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "session",
-      "fact": "最小可運作實例選擇自舉：最便宜的真實示範，並強迫框架吃自己的狗糧。",
-      "tags": [
-        "decision"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "wqd92741",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "session",
-      "fact": "castle-init.mjs 原以 toISOString 蓋 UTC 日期戳；已改用 toLocaleDateString('sv') 取本地日期——台灣（UTC+8）在午夜前後會標錯日。",
-      "tags": [
-        "lesson"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "x3jcb2yq",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "session",
-      "fact": "狀態：里程碑一檔案全落地（架構、三模板、skill、init 腳本、自舉實例）／決定：見上方 verifier 驗收。",
-      "tags": [
-        "decision／下一步：README，然後",
-        "handover"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "a4xmwexu",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "castle-verify",
-      "fact": "里程碑一由獨立 verifier 驗收 6/6 通過（檔案完整、實例嚴格通過 §2 格式、預算跨五檔一致、init 腳本跨 UTC 日界實測、第一步測試通過）。發現並修復一個缺口：SKILL.md 補齊 conf 三級定義。",
-      "tags": [
-        "milestone"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "o3xzlwrm",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "session",
-      "fact": "狀態：v0.1 完成並驗收／決定：無待決事項／下一步：使用者擇一——真實專案 dogfood 或先審 architecture.md。",
-      "tags": [
-        "handover"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "cad6s0b1",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "user",
-      "fact": "使用者定調願景：原型是真正的記憶宮殿法（空間檢索當主角）；記憶屬於專案；執行靠模型自律；v0.1 要解的信任問題仍然要解。",
-      "tags": [
-        "decision"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "j14wmv4k",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "user",
-      "fact": "v0.2 空間版核准並出貨：房間從主題改錨定到 locus（地點歸屬可機械判定）；新增 routes 作為完整性保證（巡行必報 N/N）；adjacent／emblem 行；v0.1 信任機制原封保留。",
-      "tags": [
-        "decision",
-        "milestone"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "s79cb7cs",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "session",
-      "fact": "狀態：v0.2 檔案全落地（架構、room/routes/keep 模板、skill、init 腳本、本實例）／決定：見上方 驗收，然後使用者挑第一個 dogfood 專案。",
-      "tags": [
-        "decision／下一步：verifier",
-        "handover"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "uiwz5x2s",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "castle-verify-v02",
-      "fact": "v0.2 驗收 6/7；唯一 FAIL 是流程真抓到的矛盾：路線圖改號後 keep.md 仍寫「automation opt-in v0.2」——已改為不綁版本號的寫法（a later version, architecture §9）。次要：實例 before-release 觸發詞對齊 skill 的超集。矛盾解決規則（§4.3）如設計運作。",
-      "tags": [
-        "milestone",
-        "lesson"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "55h997ey",
-      "date": "2026-07-06",
-      "confidence": "high",
-      "source": "session",
-      "fact": "狀態：v0.2 完成、驗收過、矛盾已解／決定：無待決事項／下一步：使用者挑第一個 dogfood 專案（複製 skill/ 到 ~/.claude/skills/castle/、對真實專案跑 castle-init）。",
-      "tags": [
-        "handover"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "8oyrso8w",
-      "date": "2026-07-07",
-      "confidence": "high",
-      "source": "session",
-      "fact": "v0.4 產品化出貨：app/ 本機工具（Web UI＋REST API＋Anthropic/Gemini/OpenAI adapter＋JSON 儲存＋markdown 匯入器），155 測試全綠，六個里程碑各經獨立驗收。",
-      "tags": [
-        "milestone"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "lx6a5r1w",
-      "date": "2026-07-07",
-      "confidence": "high",
-      "source": "user",
-      "fact": "使用者四決策：真城堡遷移為 JSON（原 .md 備份於 archive/markdown-original/）；architecture §9 標註 v0.4 落地；預算語意統一為記錄筆數並修文件；成果 commit 不需單號。",
-      "tags": [
-        "decision"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "waxxs80b",
-      "date": "2026-07-07",
-      "confidence": "high",
-      "source": "session",
-      "fact": "狀態：v0.4 完成、真城堡已遷移／決定：見上方 #decision／下一步：使用者填入真 API key 跑 live smoke 驗證三家 adapter（特別是 Gemini 無效金鑰的實際錯誤碼）。",
-      "tags": [
-        "handover"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "devm9pick",
-      "date": "2026-07-08",
-      "confidence": "high",
-      "source": "user",
-      "fact": "M9 出貨（commit a6fb918）：註冊專案的原生資料夾選擇器，伺服器端喚起 FolderBrowserDialog（pwsh 優先、STA、TopMost），使用者真手點測通過。教訓：本機中文文字經 Git Bash curl -d 或 stdout 會 cp950 亂碼，一律走 UTF-8 暫存檔傳遞。#milestone #lesson",
-      "tags": [
-        "milestone",
-        "lesson"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "devprocess",
-      "date": "2026-07-08",
-      "confidence": "high",
-      "source": "session",
-      "fact": "產品化全程的開發模式：九個里程碑逐一派工（sonnet 實作 agent）＋fresh-context verifier 獨立驗收＋主對話抽查實跑，計畫先經 Plan agent 設計與使用者逐項定案；最終 197 測試全綠。此模式在 M4/M5 各抓到一個實作 agent 自己沒發現的真 bug（動態 service instanceof 失效、patrol 端點誤擋）。#process",
-      "tags": [
-        "process"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "devnewhome",
-      "date": "2026-07-08",
-      "confidence": "high",
-      "source": "user",
-      "fact": "專案遷出 ~\\.claude repo，移至 D:\\Project\\MemoryCastle 獨立 git repo（重新 git init、不帶舊歷史；舊歷史留在 .claude repo 可考）。連動更新：~/.memorycastle/config.json 專案路徑、~/.claude/skills/castle/SKILL.md 絕對路徑。#decision",
-      "tags": [
-        "decision"
-      ],
-      "sweptAt": "2026-07-08"
-    },
-    {
-      "id": "devhandov2",
-      "date": "2026-07-08",
-      "confidence": "high",
-      "source": "session",
-      "fact": "狀態：v0.4＋桌面版＋雙模式＋資料夾選擇器全數出貨，專案已獨立成 repo／決定：見上方 #decision／下一步：chronicle 已達巡查門檻，請在 UI 執行第一次正式巡查（預期會提案開 app 相關房間）。#handover",
-      "tags": [
-        "handover"
-      ],
-      "sweptAt": "2026-07-08"
-    }
+    {"id":"2c8drdzs","date":"2026-07-05","confidence":"high","source":"castle-init","fact":"城堡初始化完成（MemoryCastle）。","tags":["meta"],"sweptAt":"2026-07-08"},
+    {"id":"727obxd8","date":"2026-07-06","confidence":"high","source":"user","fact":"創始四決策：方法論先行、SDK 後行；第一宿主＝Claude Code 原生；技術棧＝v0.1 用 Markdown＋零依賴 Node、SDK 階段用 TypeScript；里程碑一＝設計文件＋骨架＋最小可運作實例。","tags":["decision"],"sweptAt":"2026-07-08"},
+    {"id":"nhtb60cb","date":"2026-07-06","confidence":"high","source":"session","fact":"核心差異化選擇「准入閘勝過全存」——實測的問題是記憶信不信得過，不是找不找得到（architecture §8）。","tags":["decision"],"sweptAt":"2026-07-08"},
+    {"id":"1ewb3z1z","date":"2026-07-06","confidence":"high","source":"session","fact":"最小可運作實例選擇自舉：最便宜的真實示範，並強迫框架吃自己的狗糧。","tags":["decision"],"sweptAt":"2026-07-08"},
+    {"id":"wqd92741","date":"2026-07-06","confidence":"high","source":"session","fact":"castle-init.mjs 原以 toISOString 蓋 UTC 日期戳；已改用 toLocaleDateString('sv') 取本地日期——台灣（UTC+8）在午夜前後會標錯日。","tags":["lesson"],"sweptAt":"2026-07-08"},
+    {"id":"x3jcb2yq","date":"2026-07-06","confidence":"high","source":"session","fact":"狀態：里程碑一檔案全落地（架構、三模板、skill、init 腳本、自舉實例）／決定：見上方 verifier 驗收。","tags":["decision／下一步：README，然後","handover"],"sweptAt":"2026-07-08"},
+    {"id":"a4xmwexu","date":"2026-07-06","confidence":"high","source":"castle-verify","fact":"里程碑一由獨立 verifier 驗收 6/6 通過（檔案完整、實例嚴格通過 §2 格式、預算跨五檔一致、init 腳本跨 UTC 日界實測、第一步測試通過）。發現並修復一個缺口：SKILL.md 補齊 conf 三級定義。","tags":["milestone"],"sweptAt":"2026-07-08"},
+    {"id":"o3xzlwrm","date":"2026-07-06","confidence":"high","source":"session","fact":"狀態：v0.1 完成並驗收／決定：無待決事項／下一步：使用者擇一——真實專案 dogfood 或先審 architecture.md。","tags":["handover"],"sweptAt":"2026-07-08"},
+    {"id":"cad6s0b1","date":"2026-07-06","confidence":"high","source":"user","fact":"使用者定調願景：原型是真正的記憶宮殿法（空間檢索當主角）；記憶屬於專案；執行靠模型自律；v0.1 要解的信任問題仍然要解。","tags":["decision"],"sweptAt":"2026-07-08"},
+    {"id":"j14wmv4k","date":"2026-07-06","confidence":"high","source":"user","fact":"v0.2 空間版核准並出貨：房間從主題改錨定到 locus（地點歸屬可機械判定）；新增 routes 作為完整性保證（巡行必報 N/N）；adjacent／emblem 行；v0.1 信任機制原封保留。","tags":["decision","milestone"],"sweptAt":"2026-07-08"},
+    {"id":"s79cb7cs","date":"2026-07-06","confidence":"high","source":"session","fact":"狀態：v0.2 檔案全落地（架構、room/routes/keep 模板、skill、init 腳本、本實例）／決定：見上方 驗收，然後使用者挑第一個 dogfood 專案。","tags":["decision／下一步：verifier","handover"],"sweptAt":"2026-07-08"},
+    {"id":"uiwz5x2s","date":"2026-07-06","confidence":"high","source":"castle-verify-v02","fact":"v0.2 驗收 6/7；唯一 FAIL 是流程真抓到的矛盾：路線圖改號後 keep.md 仍寫「automation opt-in v0.2」——已改為不綁版本號的寫法（a later version, architecture §9）。次要：實例 before-release 觸發詞對齊 skill 的超集。矛盾解決規則（§4.3）如設計運作。","tags":["milestone","lesson"],"sweptAt":"2026-07-08"},
+    {"id":"55h997ey","date":"2026-07-06","confidence":"high","source":"session","fact":"狀態：v0.2 完成、驗收過、矛盾已解／決定：無待決事項／下一步：使用者挑第一個 dogfood 專案（複製 skill/ 到 ~/.claude/skills/castle/、對真實專案跑 castle-init）。","tags":["handover"],"sweptAt":"2026-07-08"},
+    {"id":"8oyrso8w","date":"2026-07-07","confidence":"high","source":"session","fact":"v0.4 產品化出貨：app/ 本機工具（Web UI＋REST API＋Anthropic/Gemini/OpenAI adapter＋JSON 儲存＋markdown 匯入器），155 測試全綠，六個里程碑各經獨立驗收。","tags":["milestone"],"sweptAt":"2026-07-08"},
+    {"id":"lx6a5r1w","date":"2026-07-07","confidence":"high","source":"user","fact":"使用者四決策：真城堡遷移為 JSON（原 .md 備份於 archive/markdown-original/）；architecture §9 標註 v0.4 落地；預算語意統一為記錄筆數並修文件；成果 commit 不需單號。","tags":["decision"],"sweptAt":"2026-07-08"},
+    {"id":"waxxs80b","date":"2026-07-07","confidence":"high","source":"session","fact":"狀態：v0.4 完成、真城堡已遷移／決定：見上方 #decision／下一步：使用者填入真 API key 跑 live smoke 驗證三家 adapter（特別是 Gemini 無效金鑰的實際錯誤碼）。","tags":["handover"],"sweptAt":"2026-07-08"},
+    {"id":"devm9pick","date":"2026-07-08","confidence":"high","source":"user","fact":"M9 出貨（commit a6fb918）：註冊專案的原生資料夾選擇器，伺服器端喚起 FolderBrowserDialog（pwsh 優先、STA、TopMost），使用者真手點測通過。教訓：本機中文文字經 Git Bash curl -d 或 stdout 會 cp950 亂碼，一律走 UTF-8 暫存檔傳遞。#milestone #lesson","tags":["milestone","lesson"],"sweptAt":"2026-07-08"},
+    {"id":"devprocess","date":"2026-07-08","confidence":"high","source":"session","fact":"產品化全程的開發模式：九個里程碑逐一派工（sonnet 實作 agent）＋fresh-context verifier 獨立驗收＋主對話抽查實跑，計畫先經 Plan agent 設計與使用者逐項定案；最終 197 測試全綠。此模式在 M4/M5 各抓到一個實作 agent 自己沒發現的真 bug（動態 service instanceof 失效、patrol 端點誤擋）。#process","tags":["process"],"sweptAt":"2026-07-08"},
+    {"id":"devnewhome","date":"2026-07-08","confidence":"high","source":"user","fact":"專案遷出 ~\\.claude repo，移至 D:\\Project\\MemoryCastle 獨立 git repo（重新 git init、不帶舊歷史；舊歷史留在 .claude repo 可考）。連動更新：~/.memorycastle/config.json 專案路徑、~/.claude/skills/castle/SKILL.md 絕對路徑。#decision","tags":["decision"],"sweptAt":"2026-07-08"},
+    {"id":"devhandov2","date":"2026-07-08","confidence":"high","source":"session","fact":"狀態：v0.4＋桌面版＋雙模式＋資料夾選擇器全數出貨，專案已獨立成 repo／決定：見上方 #decision／下一步：chronicle 已達巡查門檻，請在 UI 執行第一次正式巡查（預期會提案開 app 相關房間）。#handover","tags":["handover"],"sweptAt":"2026-07-08"},
+    {"id":"q88q5fd4","date":"2026-07-06","confidence":"high","source":"user","fact":"castle skill 已安裝到 ~\\.claude\\skills\\castle\\，全域可用；各專案只剩 init＋決定城堡要不要進版控兩步。","tags":["meta"],"sweptAt":"2026-10-28","promotedTo":"room-rk7j1wj2"},
+    {"id":"devm7elec","date":"2026-07-07","confidence":"high","source":"session","fact":"M7 桌面版出貨（commit c0d4053）：Electron portable 單檔 exe（約 94MB、未簽章）、主程序內嵌伺服器、attach-or-own 探測（CLI 已跑則附掛）、單一實例鎖。#milestone","tags":["milestone"],"sweptAt":"2026-10-28"},
+    {"id":"devm7less","date":"2026-07-07","confidence":"high","source":"session","fact":"M7 兩個上游坑：electron@43 安裝器壞（CJS require ESM-only @electron/get），要手動放 win32-x64 dist 進 node_modules/electron/dist/＋path.txt，從零 npm install 都要重做；electron-builder 釘 26.13.0 避開 @noble/hashes ESM 相依炸 blockmap（詳見 app/README.md）。#lesson","tags":["lesson"],"sweptAt":"2026-10-28","promotedTo":"web-ui-rest-api-llm"},
+    {"id":"devm8duo","date":"2026-07-08","confidence":"high","source":"user","fact":"M8 LLM 雙模式出貨（commit 70db2fc）：mode api|cli；CLI 模式 shell out 本機已登入官方 CLI（claude/codex/agy）吃訂閱額度。研究結論：三家皆無官方支援第三方 app 用訂閱，CLI 模式屬個人自用灰色地帶，API 模式仍為預設建議；使用者選定預設走 CLI 模式（anthropic）。#milestone #decision","tags":["milestone","decision"],"sweptAt":"2026-10-28"},
+    {"id":"devm8less","date":"2026-07-08","confidence":"high","source":"session","fact":"M8 兩個 live 測試才抓到的坑：agy 遇到解析不了的 --model 不會乾淨失敗、會落入無限制 agentic 工具行為亂讀全機檔案，因此一律強制 --sandbox；Windows 上 codex.cmd 路徑帶空格讓 shell:true 誤斷詞，改用 cmd.exe /d /s /c 裸名呼叫解決。#lesson","tags":["lesson"],"sweptAt":"2026-10-28","promotedTo":"web-ui-rest-api-llm"},
+    {"id":"vw7h9k2d","date":"2026-07-09","confidence":"high","source":"session","fact":"狀態：巡查頁跨頁狀態保留（patrolStore）、CLI judge 精簡旗標（同 prompt 69s→6s）、cluster 蒸餾改 per-fact records（architecture §4 已修訂）皆出貨，198 測試綠、獨立 verifier 8/8；全域安裝 docs／scripts／templates／SKILL.md 補齊並實測 init。／決定：judge schema 不加 minItems/maxItems（OpenAI strict 模式不支援），上限用 prompt 語意＋patrolFlow slice(0,8) 圍住。／下一步：使用者以新 exe 對客戶專案城堡實跑巡查驗證粒度與速度，再決定 commit＋push。 #handover","tags":["handover"],"sweptAt":"2026-10-28"},
+    {"id":"pw4kq7se","date":"2026-07-09","confidence":"high","source":"session","fact":"公開前盤查發現 chronicle 的 handover 曾寫入客戶真實名稱（違反 keep 約束「城堡檔案視同公開、不寫第三方個資」），連同測試 fixture 與文件範例已全倉去識別化，獨立 verifier 8/8 驗收通過；教訓：記錄提及外部客戶／專案一律用去識別代稱，handover 也不例外。","tags":["lesson"],"sweptAt":"2026-10-28"},
+    {"id":"rz8n3vjc","date":"2026-07-09","confidence":"high","source":"user","fact":"公開化定案：MIT 授權＋本名署名（見 LICENSE）；skill 打包為 Claude Code plugin（安裝名 memory-castle@memorycastle，根目錄 .claude-plugin/marketplace.json＋plugins/memory-castle/ 自包含目錄），產物由 scripts/build-plugin.mjs 從正本複製生成、預期字樣缺失即報錯防漂移；version 只在 plugin.json 維護（官方建議，marketplace entry 不重複寫）；公開 repo 將另開乾淨初始 commit，本私倉保留完整開發史。","tags":["decision","milestone"],"sweptAt":"2026-10-28","promotedTo":"room-rk7j1wj2"},
+    {"id":"gh0pubv4","date":"2026-07-10","confidence":"high","source":"session","fact":"狀態：公開發布完成——public repo https://github.com/redseye/MemoryCastle（乾淨單一初始 commit）、Release v0.4.0 附 MemoryCastle-0.4.0-portable.exe、marketplace.json 線上抓取驗證通過；原私有 mirror 改名 MemoryCastle-dev（本機 origin 已改指、含完整開發史，永不轉 public）。／決定：app 版本號對齊 0.4.0；README 補 plugin 安裝節（/plugin marketplace add redseye/MemoryCastle → /plugin install memory-castle@memorycastle）。／下一步：可選項未做——CLI 執行期訊息雙語化（castle-init.mjs 提示全繁中，國際使用者看不懂）；公開後 chronicle 新記錄只進 dev、public 為發布快照，下次 release 再同步。 #handover","tags":["handover"],"sweptAt":"2026-10-28"},
+    {"id":"bi2lng7q","date":"2026-07-10","confidence":"high","source":"session","fact":"狀態：CLI 表層訊息雙語化出貨（castle-init.mjs＋app cli.ts，格式「英文 ／ 繁中」，plugin 副本經 build-plugin.mjs 重生成，198 測試綠）；上一筆 handover 的可選項已完成。／決定：core 錯誤字串與 Web UI 維持繁中不動（跨層共用，另案處理）。／下一步：無待決事項；public 與 dev 兩倉將同步此變更。 #handover","tags":["handover"],"sweptAt":"2026-10-28"}
   ]
 }

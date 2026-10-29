@@ -6,25 +6,27 @@
 
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { readJsonFile } from '../storage/json-file.js';
-import { countBudgets, patrolDue } from './budgets.js';
+import { countBudgets, markPatrolled, patrolDue, readCastleMeta } from './budgets.js';
 import type { ChronicleCollection, KeepCollection, RoomsCollection, RoutesCollection } from './collections.js';
 import { makeChronicleCollection, makeKeepCollection, makeRoomsCollection, makeRoutesCollection } from './collections.js';
-import { supersede, sweepChronicle } from './consolidate.js';
+import { archiveRecord, supersede, sweepBlockers, sweepChronicle } from './consolidate.js';
 import { NoCastleError } from './errors.js';
 import { castleDirOf, castleJsonPath } from './layout.js';
-import { roomsForPaths as roomsForPathsPure } from './locus.js';
+import { matchPathsToRooms, type LocusMatch } from './locus.js';
 import { search, type SearchOptions } from './search.js';
 import type { PlanWalkOptions } from './walk.js';
 import { planWalk, walkReport } from './walk.js';
 import type {
+  ArchivedRecordEntry,
   BudgetCounts,
+  ChronicleArchiveEntry,
   CastleMeta,
   CastleRecord,
   PatrolDueResult,
   RoomFile,
   SearchResult,
-  SupersededEntry,
+  SweepBlockers,
+  SweepResult,
   WalkPlan,
   WalkReport,
 } from './types.js';
@@ -36,14 +38,18 @@ export interface Castle {
   chronicle: ChronicleCollection;
   rooms: RoomsCollection;
   routes: RoutesCollection;
-  getMeta(): Promise<CastleMeta>;
+  getMeta(): Promise<CastleMeta>; // budgets always complete (defaults filled in)
+  markPatrolled(now?: Date): Promise<CastleMeta>;
   countBudgets(): Promise<BudgetCounts>;
   patrolDue(now?: Date): Promise<PatrolDueResult>;
   roomsForPaths(paths: string[]): Promise<RoomFile[]>;
+  matchPaths(paths: string[]): Promise<LocusMatch>;
   planWalk(routeName: string, opts?: PlanWalkOptions): Promise<WalkPlan>;
   walkReport(plan: WalkPlan): WalkReport;
-  sweepChronicle(ids: string[]): Promise<CastleRecord[]>;
-  supersede(loserId: string, winnerId: string, reason: string): Promise<SupersededEntry>;
+  sweepChronicle(ids: string[], promotedTo?: Record<string, string>): Promise<SweepResult>;
+  sweepBlockers(ids: string[], promotedTo?: Record<string, string>): Promise<SweepBlockers>;
+  supersede(loserId: string, winnerId: string, reason: string): Promise<ArchivedRecordEntry | ChronicleArchiveEntry>;
+  archiveRecord(id: string, reason: string): Promise<ArchivedRecordEntry>;
   search(q: string, opts?: SearchOptions): Promise<SearchResult[]>;
 }
 
@@ -63,14 +69,18 @@ export async function openCastle(root: string): Promise<Castle> {
     chronicle: makeChronicleCollection(castleDir),
     rooms,
     routes: makeRoutesCollection(castleDir),
-    getMeta: () => readJsonFile<CastleMeta>(castleJsonPath(castleDir)),
+    getMeta: () => readCastleMeta(castleDir),
+    markPatrolled: (now) => markPatrolled(castleDir, now),
     countBudgets: () => countBudgets(castleDir),
     patrolDue: (now) => patrolDue(castleDir, now),
-    roomsForPaths: async (paths) => roomsForPathsPure(await rooms.list(), paths),
-    planWalk: (routeName, opts) => planWalk(castleDir, routeName, opts),
+    roomsForPaths: async (paths) => matchPathsToRooms(await rooms.list(), paths, resolvedRoot).rooms,
+    matchPaths: async (paths) => matchPathsToRooms(await rooms.list(), paths, resolvedRoot),
+    planWalk: (routeName, opts) => planWalk(castleDir, routeName, { root: resolvedRoot, ...opts }),
     walkReport,
-    sweepChronicle: (ids) => sweepChronicle(castleDir, ids),
+    sweepChronicle: (ids, promotedTo) => sweepChronicle(castleDir, ids, promotedTo),
+    sweepBlockers: (ids, promotedTo) => sweepBlockers(castleDir, ids, promotedTo),
     supersede: (loserId, winnerId, reason) => supersede(castleDir, loserId, winnerId, reason),
+    archiveRecord: (id, reason) => archiveRecord(castleDir, id, reason),
     search: (q, opts) => search(castleDir, q, opts),
   };
 }

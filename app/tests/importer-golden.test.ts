@@ -72,7 +72,14 @@ describe('importer golden test (real MemoryCastle castle)', () => {
     expect(meta.schema).toBe(1);
     expect(meta.lastPatrolAt).toBe('2026-07-06');
     expect(meta.createdAt).toBe('2026-07-05'); // earliest chronicle record date
-    expect(meta.budgets).toEqual({ keepMax: 30, roomMax: 120, chronicleSweep: 20, patrolDays: 30, stalenessDays: 90 });
+    expect(meta.budgets).toEqual({
+      keepMax: 30,
+      roomMax: 120,
+      chronicleSweep: 20,
+      patrolDays: 30,
+      stalenessDays: 90,
+      factMaxChars: 200,
+    });
 
     const keep = JSON.parse(await readFile(join(castleDir, 'keep.json'), 'utf8'));
     expect(keep.schema).toBe(1);

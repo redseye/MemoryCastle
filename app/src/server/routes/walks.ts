@@ -28,6 +28,13 @@ export function registerWalkRoutes(app: Hono): void {
     }
 
     const report = castle.walkReport(plan);
-    return c.json({ stops: plan.stops.map((s) => ({ target: s.target, lines: s.lines })), report });
+    // Flags only when set — every byte here lands in an agent's context.
+    const stops = plan.stops.map((s) => ({
+      target: s.target,
+      lines: s.lines,
+      ...(s.skipped ? { read: s.read, skipped: true } : {}),
+      ...(s.deferred ? { deferred: true } : {}),
+    }));
+    return c.json({ stops, report });
   });
 }

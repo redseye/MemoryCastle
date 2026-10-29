@@ -22,6 +22,14 @@ emblem: 齒輪
     expect(room.warnings).toHaveLength(0);
   });
 
+  it('warns about (but still imports) a room record over the fact cap', () => {
+    const md = `# Room: 房\n\nlocus: src/**\n\n- [2026-07-06 | conf:med | src:session] ${'x'.repeat(250)}\n`;
+    const room = parseRoomMd(md, 'r', 'rooms/r.md');
+    expect(room.records).toHaveLength(1);
+    expect(room.warnings).toHaveLength(1);
+    expect(room.warnings[0]).toMatchObject({ file: 'rooms/r.md', line: 5 });
+  });
+
   it('maps adjacent "none" to an empty array', () => {
     const md = `# Room: 獨立房間
 

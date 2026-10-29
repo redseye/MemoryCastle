@@ -48,6 +48,17 @@ per-call latency (a subprocess starts every time) — **API mode is the
 default and recommended path**; see `docs/api.md`'s Settings section before
 switching.
 
+Once a project has a castle, the 「健康檢查」 page (or `node dist/cli.js doctor
+<project-root>`, or `GET /projects/:id/doctor`) runs a deterministic,
+LLM-free check for drift: uncommitted changes with a stale handover, an
+overdue patrol, a room's locus pointing at files that no longer exist, or a
+route with a gap — plus token hygiene: records over the 200-character fact
+cap, stale records, keep/rooms over budget, rooms no path can reach, and
+route stops outside the walk whitelist. No key required.
+`node dist/cli.js measure [project-root]` prints an *estimated* token cost
+(CJK ×1 + other characters ÷4) of the session-start payload versus a
+flat-file equivalent of every live record, and of the patrol payload.
+
 Agents should read `docs/api.md` instead of this file — it documents every
 `/api/v1` endpoint with request/response shapes and curl examples.
 

@@ -3,7 +3,7 @@
 
 import type { Hono } from 'hono';
 import { openProjectCastle } from '../project-context.js';
-import { parseRecordInput } from '../records-validate.js';
+import { loadRecordRules, parseRecordInput } from '../records-validate.js';
 import { jsonBody } from '../request.js';
 
 export function registerChronicleRoutes(app: Hono): void {
@@ -15,7 +15,7 @@ export function registerChronicleRoutes(app: Hono): void {
   app.post('/projects/:id/chronicle/records', async (c) => {
     const castle = await openProjectCastle(c.req.param('id'));
     const body = await jsonBody<Record<string, unknown>>(c);
-    const record = await castle.chronicle.append(parseRecordInput(body));
+    const record = await castle.chronicle.append(parseRecordInput(body, await loadRecordRules(castle)));
     return c.json(record, 201);
   });
 }

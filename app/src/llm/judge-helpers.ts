@@ -7,6 +7,13 @@ import { validateAgainstSchema } from './schemas.js';
 
 type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
+// Adapters without block-level cache markers (OpenAI, Gemini, CLI) fold the
+// shared context in front of the system prompt — first, so an automatic
+// prefix cache still sees the same leading text on every call of a flow.
+export function systemWithContext(task: { system: string; context?: string }): string {
+  return task.context ? `${task.context}\n\n${task.system}` : task.system;
+}
+
 function tryParseAndValidate<T>(rawText: string, schema: unknown): ParseResult<T> {
   let parsed: unknown;
   try {

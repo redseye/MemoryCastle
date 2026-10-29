@@ -56,4 +56,17 @@ describe('search', () => {
   it('returns no results for an unmatched query', async () => {
     expect(await search(castleDir, '完全不存在的詞')).toEqual([]);
   });
+
+  it('never returns everything: no query and no tag yields nothing', async () => {
+    expect(await search(castleDir, '')).toEqual([]);
+    expect(await search(castleDir, '', { tags: [] })).toEqual([]);
+  });
+
+  it('caps results at 20 by default, honors a smaller limit, and never exceeds 100', async () => {
+    const chronicle = makeChronicleCollection(castleDir);
+    for (let i = 0; i < 105; i++) await chronicle.append({ confidence: 'med', source: 'session', fact: `批次 ${i}` });
+    expect(await search(castleDir, '批次')).toHaveLength(20);
+    expect(await search(castleDir, '批次', { limit: 5 })).toHaveLength(5);
+    expect(await search(castleDir, '批次', { limit: 1000 })).toHaveLength(100);
+  }, 30000);
 });

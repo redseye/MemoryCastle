@@ -29,6 +29,11 @@ describe('openai adapter', () => {
     expect(params.instructions).toBe('sys');
     expect(params.input).toBe('usr');
     expect(params.max_output_tokens).toBe(300);
+
+    // v0.5: a shared context is prefixed (first, so OpenAI's automatic
+    // prefix cache sees identical leading text across a patrol's calls).
+    await service.judge<{ ok: boolean }>({ context: 'castle map', system: 'sys', user: 'usr', schema: SCHEMA });
+    expect(create.mock.calls[1][0].instructions).toBe('castle map\n\nsys');
     expect(params.text.format.type).toBe('json_schema');
     expect(params.text.format.schema).toEqual(SCHEMA);
     expect(params.text.format.strict).toBe(true);

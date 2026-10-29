@@ -37,4 +37,4 @@ Note: by design (architecture §2), generated castle instance files are written 
 
 ## Status
 
-v0.4 (2026-07-08) — the trust mechanics (v0.1), spatial recall (v0.2 rooms + routes), and a local companion app (`app/`: Web UI, REST API, three LLM adapters, JSON storage with a markdown importer, portable Windows desktop build) are all shipped; architecture §9 tracks what landed. MIT licensed.
+v0.5 (2026-10-28) — the trust mechanics (v0.1), spatial recall (v0.2 rooms + routes), and a local companion app (`app/`: Web UI, REST API, three LLM adapters, JSON storage with a markdown importer, portable Windows desktop build) are all shipped. v0.5 bounds what a session loads: a per-record length cap, one-record-per-line JSON, a patrol check on the session-start route, incremental patrols, and `scripts/castle.mjs` for deterministic file operations (append / migrate / sweep / archive). Architecture §9 tracks what landed. MIT licensed.

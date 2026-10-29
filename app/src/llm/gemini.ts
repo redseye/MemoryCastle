@@ -13,7 +13,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { InvalidApiKeyError } from '../server/llm-seam.js';
 import type { JudgeTask, LlmService } from '../server/llm-seam.js';
-import { judgeWithRetry } from './judge-helpers.js';
+import { judgeWithRetry, systemWithContext } from './judge-helpers.js';
 
 export interface GeminiClientLike {
   models: {
@@ -61,10 +61,14 @@ export function createGeminiService(config: GeminiServiceConfig, clientOverride?
         model: config.model,
         contents,
         config: {
-          systemInstruction: task.system,
+          systemInstruction: systemWithContext(task),
           responseMimeType: 'application/json',
           responseJsonSchema: task.schema,
           maxOutputTokens: task.maxTokens,
+          // Patrol cancel: @google/genai's GenerateContentConfig carries the
+          // abort signal here (verified in @google/genai/dist/node/node.d.ts),
+          // not as a second call argument like the Anthropic/OpenAI SDKs.
+          abortSignal: task.signal,
         },
       });
 

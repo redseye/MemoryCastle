@@ -2,10 +2,11 @@
 // 約束→constraints, 核心事實→core; legacy English headings tolerated), a
 // "last patrol" header line, and record lines within each section.
 
+import { DEFAULT_BUDGETS } from '../core/init.js';
 import type { CastleRecord, KeepSection } from '../core/types.js';
 import type { ImportWarning, ParsedKeep } from './types.js';
 import { isBlank, isBlockquote, isCommentLine, isHeading, splitLines } from './line-helpers.js';
-import { parseRecordLine } from './record-line.js';
+import { factLengthWarning, parseRecordLine } from './record-line.js';
 
 const LAST_PATROL_PATTERNS = [/上次巡查[:：]\s*(\d{4}-\d{2}-\d{2})/, /Last patrol:\s*(\d{4}-\d{2}-\d{2})/i];
 
@@ -21,7 +22,7 @@ export interface ParseKeepResult extends ParsedKeep {
   warnings: ImportWarning[];
 }
 
-export function parseKeepMd(content: string, file = 'keep.md'): ParseKeepResult {
+export function parseKeepMd(content: string, file = 'keep.md', factMaxChars = DEFAULT_BUDGETS.factMaxChars): ParseKeepResult {
   const sections: Record<KeepSection, CastleRecord[]> = { identity: [], constraints: [], core: [] };
   const warnings: ImportWarning[] = [];
   let lastPatrolAt: string | null = null;
@@ -52,6 +53,8 @@ export function parseKeepMd(content: string, file = 'keep.md'): ParseKeepResult 
     if (record) {
       if (current) {
         sections[current].push(record);
+        const tooLong = factLengthWarning(record, factMaxChars, file, lineNo, line);
+        if (tooLong) warnings.push(tooLong);
       } else {
         warnings.push({ file, line: lineNo, text: line, reason: 'record line found before any known section heading' });
       }

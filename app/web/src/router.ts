@@ -11,6 +11,7 @@ export type Page =
   | 'rooms'
   | 'routes'
   | 'patrol'
+  | 'doctor'
   | 'import'
   | 'settings';
 
@@ -21,6 +22,7 @@ export const PAGES: { page: Page; label: string }[] = [
   { page: 'rooms', label: '房間瀏覽' },
   { page: 'routes', label: '路線與巡行' },
   { page: 'patrol', label: '巡查' },
+  { page: 'doctor', label: '健康檢查' },
   { page: 'import', label: '匯入精靈' },
   { page: 'settings', label: '設定' },
 ];

@@ -8,7 +8,9 @@ import { CastleExistsError, NoCastleError, NotFoundError } from '../core/index.j
 import { HttpError } from './http-errors.js';
 import { InvalidApiKeyError, LlmBadOutputError, LlmNotConfiguredError, NotConfiguredLlmService } from './llm-seam.js';
 import type { LlmService } from './llm-seam.js';
+import { PatrolAlreadyRunningError, PatrolCancelledError } from '../flows/patrolFlow.js';
 import { registerChronicleRoutes } from './routes/chronicle.js';
+import { registerDoctorRoutes } from './routes/doctor.js';
 import { registerHealthRoutes } from './routes/health.js';
 import { registerImportRoutes } from './routes/import.js';
 import { registerKeepRoutes } from './routes/keep.js';
@@ -33,6 +35,7 @@ export function createApp(options: CreateAppOptions = {}): Hono {
   registerProjectRoutes(app);
   registerKeepRoutes(app);
   registerChronicleRoutes(app);
+  registerDoctorRoutes(app);
   registerRoomRoutes(app);
   registerRecallRoutes(app, { llmService });
   registerWalkRoutes(app);
@@ -61,6 +64,12 @@ export function createApp(options: CreateAppOptions = {}): Hono {
     }
     if (err instanceof LlmBadOutputError) {
       return c.json({ error: { code: 'llm_bad_output', message: err.message } }, 502);
+    }
+    if (err instanceof PatrolCancelledError) {
+      return c.json({ error: { code: 'patrol_cancelled', message: err.message } }, 409);
+    }
+    if (err instanceof PatrolAlreadyRunningError) {
+      return c.json({ error: { code: 'patrol_already_running', message: err.message } }, 409);
     }
     console.error(err);
     const message = err instanceof Error ? err.message : String(err);

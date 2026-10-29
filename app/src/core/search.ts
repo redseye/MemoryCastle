@@ -1,6 +1,8 @@
 // search(q, {tags}): substring or regex scan over keep + chronicle + rooms
 // (architecture §8: no vector store — a small curated store is searched
-// directly).
+// directly). Neither a query nor a tag means no search at all (never "return
+// everything"), and results are capped (default 20, max 100) so a broad
+// keyword can't dump the castle into context.
 
 import { makeChronicleCollection, makeKeepCollection, makeRoomsCollection } from './collections.js';
 import type { CastleRecord, SearchResult } from './types.js';
@@ -8,7 +10,11 @@ import type { CastleRecord, SearchResult } from './types.js';
 export interface SearchOptions {
   tags?: string[];
   regex?: boolean;
+  limit?: number;
 }
+
+export const SEARCH_DEFAULT_LIMIT = 20;
+export const SEARCH_MAX_LIMIT = 100;
 
 const KEEP_SECTIONS = ['identity', 'constraints', 'core'] as const;
 
@@ -29,6 +35,8 @@ function matchesQuery(record: CastleRecord, q: string, opts: SearchOptions): boo
 
 export async function search(castleDir: string, q: string, opts: SearchOptions = {}): Promise<SearchResult[]> {
   const results: SearchResult[] = [];
+  if (!q && !(opts.tags && opts.tags.length > 0)) return results;
+  const limit = Math.min(Math.max(1, Math.floor(opts.limit ?? SEARCH_DEFAULT_LIMIT)), SEARCH_MAX_LIMIT);
 
   const keep = makeKeepCollection(castleDir);
   for (const section of KEEP_SECTIONS) {
@@ -49,5 +57,5 @@ export async function search(castleDir: string, q: string, opts: SearchOptions =
     }
   }
 
-  return results;
+  return results.slice(0, limit);
 }

@@ -1,30 +1,13 @@
 {
   "schema": 1,
   "slug": "room-rk7j1wj2",
-  "name": "里程碑一開發室",
-  "locus": [
-    "architecture/**",
-    "skill/**",
-    "castle-init.mjs",
-    "v0.1 里程碑一"
-  ],
+  "name": "方法論／規格室",
+  "locus": ["docs/architecture.md","skill/**","scripts/**","templates/**","plugins/**"],
   "adjacent": [],
   "emblem": null,
   "createdAt": "2026-07-08",
   "records": [
-    {
-      "id": "ghwkm2gc",
-      "date": "2026-07-08",
-      "confidence": "high",
-      "source": "patrol",
-      "fact": "MemoryCastle 城堡於 2026-07-05 初始化完成；創始四決策底定（方法論先行、SDK後行，第一宿主為 Claude Code 原生，v0.1 用 Markdown+零依賴 Node、SDK 階段用 TypeScript，里程碑一＝設計文件＋骨架＋最小可運作實例），核心差異化定調「准入閘勝過全存」，最小可運作實例選擇自舉；過程中修復 castle-init.mjs 的 UTC 日期戳 bug（改用 toLocaleDateString('sv') 取本地日期，避免台灣時區跨日誤標）；里程碑一經獨立 verifier 驗收 6/6 全過（並補齊 SKILL.md 的 conf 三級定義），v0.1 已完成驗收且無待決事項，下一步待使用者擇一：真實專案 dogfood 或先審 architecture.md。",
-      "tags": [
-        "meta",
-        "decision",
-        "lesson",
-        "milestone",
-        "handover"
-      ]
-    }
+    {"id":"g8cxtmgv","date":"2026-07-09","confidence":"high","source":"chronicle:rz8n3vjc,q88q5fd4","fact":"plugins/memory-castle/ 與全域安裝（~/.claude/MemoryCastle、~/.claude/skills/castle）都是 scripts/build-plugin.mjs 從正本產生的副本（全域加 --global）；改 skill／docs／scripts／templates 正本後要重跑，勿手改副本。","tags":["build","invariant"],"verifiedAt":"2026-10-28"},
+    {"id":"wa06qwv4","date":"2026-07-06","confidence":"high","source":"chronicle:wqd92741","fact":"日期戳一律取本地日期 toLocaleDateString('sv')、勿用 toISOString（UTC）：台灣 UTC+8 在午夜前後會標錯日；castle-init.mjs 曾因此出錯，castle.mjs 與 app/src/core/ids.ts 皆沿用。","tags":["lesson"],"verifiedAt":"2026-10-28"}
   ]
 }

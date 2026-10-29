@@ -28,4 +28,15 @@ not a record and not boilerplate
     expect(result.warnings).toHaveLength(1);
     expect(result.warnings[0].line).toBe(3);
   });
+
+  it('imports an over-length record anyway (never drops data) but warns about it', () => {
+    const longFact = '長'.repeat(201);
+    const md = `- [2026-07-06 | conf:high | src:user] ${longFact} #lesson\n- [2026-07-06 | conf:high | src:user] 短的。\n`;
+    const result = parseChronicleMd(md);
+    expect(result.entries).toHaveLength(2);
+    expect(result.entries[0].fact).toBe(longFact);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toMatchObject({ file: 'chronicle.md', line: 1 });
+    expect(result.warnings[0].reason).toContain('201');
+  });
 });

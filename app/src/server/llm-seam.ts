@@ -13,6 +13,15 @@ export interface JudgeTask<T> {
   user: string;
   schema: unknown; // JSON schema literal, shared verbatim with the provider call
   maxTokens?: number;
+  // v0.5: a stable block several calls of one flow share verbatim (the
+  // patrol's castle map: keep + room directory). Adapters send it FIRST,
+  // ahead of `system`, so a provider-side prefix cache can reuse it across
+  // those calls; the Anthropic adapter marks it with cache_control.
+  context?: string;
+  // Patrol cancel (M-cancel): when set, a provider adapter that supports
+  // request-level cancellation aborts the in-flight call. Optional so every
+  // existing caller (rememberFlow, etc.) is unaffected.
+  signal?: AbortSignal;
 }
 
 export interface LlmService {

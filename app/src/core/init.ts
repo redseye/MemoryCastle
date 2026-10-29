@@ -1,7 +1,9 @@
 // initCastle: scaffold a new castle's JSON files. Refuses to overwrite an
 // existing castle (CastleExistsError). The three default routes mirror the
 // project's own .claude/castle/routes.md (session-start / before-release /
-// patrol) translated into the target/read vocabulary of plan §2.
+// patrol) translated into the target/read vocabulary of plan §2; session-start
+// follows contract C5's default order (patrol-check → keep → last handover →
+// rooms by locus).
 
 import { existsSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
@@ -26,6 +28,7 @@ export const DEFAULT_BUDGETS: Budgets = {
   chronicleSweep: 20,
   patrolDays: 30,
   stalenessDays: 90,
+  factMaxChars: 200,
 };
 
 function defaultRoutesFile(): RoutesFile {
@@ -36,7 +39,9 @@ function defaultRoutesFile(): RoutesFile {
         name: 'session-start',
         occasion: '每個 session 開工時走',
         stops: [
+          { target: 'patrol-check', read: 'due' },
           { target: 'keep', read: 'all' },
+          { target: 'chronicle', read: 'last-handover' },
           { target: 'rooms-by-locus', read: 'all' },
         ],
       },

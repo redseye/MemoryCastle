@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "month": "2026-10",
+  "entries": [
+    {"id":"y6s2nt0t","date":"2026-10-28","confidence":"high","source":"chronicle:gh0pubv4","fact":"決定：public repo redseye/MemoryCastle 只當發布快照（乾淨初始 commit，下次 release 才同步）；本機 origin＝MemoryCastle-dev，含完整開發史與城堡新記錄，永不轉 public。","tags":["decision","release"],"sweptAt":"2026-10-28","promotedTo":"keep"}
+  ]
+}

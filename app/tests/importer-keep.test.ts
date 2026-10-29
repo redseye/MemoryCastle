@@ -29,6 +29,16 @@ describe('parseKeepMd', () => {
     expect(result.warnings).toHaveLength(0);
   });
 
+  it('warns about (but still imports) a keep record over the fact cap, and parses ver:', () => {
+    const md = `## 核心事實\n\n- [2026-07-06 | conf:high | src:user | ver:2026-10-01] ${'核'.repeat(201)} #meta\n`;
+    const result = parseKeepMd(md);
+    expect(result.sections.core).toHaveLength(1);
+    expect(result.sections.core[0].verifiedAt).toBe('2026-10-01');
+    expect(result.sections.core[0].tags).toEqual(['meta']);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toMatchObject({ file: 'keep.md', line: 3 });
+  });
+
   it('tolerates legacy English headings and the half-width colon variant', () => {
     const md = `# Keep — Test
 

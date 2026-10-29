@@ -2,12 +2,13 @@
   "schema": 1,
   "projectName": "MemoryCastle",
   "createdAt": "2026-07-05",
-  "lastPatrolAt": "2026-07-06",
+  "lastPatrolAt": "2026-10-28",
   "budgets": {
     "keepMax": 30,
     "roomMax": 120,
     "chronicleSweep": 20,
     "patrolDays": 30,
-    "stalenessDays": 90
+    "stalenessDays": 90,
+    "factMaxChars": 200
   }
 }

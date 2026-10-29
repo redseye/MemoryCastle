@@ -38,6 +38,6 @@ export function archiveChroniclePath(castleDir: string, month: string): string {
   return join(archiveDirPath(castleDir), `chronicle-${month}.json`);
 }
 
-export function supersededJsonPath(castleDir: string): string {
-  return join(archiveDirPath(castleDir), 'superseded.json');
+export function archivedRoomRecordsPath(castleDir: string, month: string): string {
+  return join(archiveDirPath(castleDir), `room-records-${month}.json`);
 }

@@ -3,47 +3,79 @@
 // each stop's readable lines, including ⚠<route> (route-warnings) filtering.
 // walkReport turns a plan into the mandatory count report (architecture §6):
 // "巡行 N/N 房，發現 X 項注意" — skipping a stop makes the walk invalid.
+//
+// Contract C5: stop targets and read values are a closed whitelist; a stop
+// outside it is skipped (walk invalid), never guessed at. rooms-by-locus with
+// no paths yet (session start) is deferred — neither passed nor skipped — and
+// given paths no room owns are listed in the report. Record lines that are
+// hypotheses (contract C3) carry HYPOTHESIS_MARK so a reader can apply the
+// staleness rule without seeing dates.
 
+import { resolve } from 'node:path';
 import { readJsonFile } from '../storage/json-file.js';
+import { isStale, patrolDue, readCastleMeta } from './budgets.js';
 import { makeRoomsCollection, makeRoutesCollection } from './collections.js';
 import { NotFoundError } from './errors.js';
 import { chronicleJsonPath, keepJsonPath } from './layout.js';
-import { roomsForPaths } from './locus.js';
-import type { CastleRecord, ChronicleFile, KeepFile, RoomFile, WalkPlan, WalkReport, WalkStop } from './types.js';
+import { matchPathsToRooms } from './locus.js';
+import { newestHandover } from './record-ops.js';
+import type {
+  CastleRecord,
+  ChronicleFile,
+  KeepFile,
+  PatrolTrigger,
+  RoomFile,
+  RouteStop,
+  WalkPlan,
+  WalkReport,
+  WalkStop,
+} from './types.js';
 
 export interface PlanWalkOptions {
   paths?: string[];
+  root?: string; // project root for absolute-path normalization; defaults to castleDir/../..
+  now?: Date;
 }
 
-function factsOf(records: CastleRecord[]): string[] {
-  return records.map((r) => r.fact);
+export const HYPOTHESIS_MARK = '（待驗證）';
+
+const KEEP_SECTIONS = ['identity', 'constraints', 'core'] as const;
+const FIXED_TARGETS = ['keep', 'chronicle', 'routes', 'rooms-by-locus', 'all-rooms', 'patrol-check'];
+
+export function isValidStopTarget(target: string): boolean {
+  if (target.startsWith('room:')) return target.length > 'room:'.length;
+  return FIXED_TARGETS.includes(target);
 }
 
-function filterRouteWarnings(records: CastleRecord[], routeName: string): CastleRecord[] {
-  return records.filter((r) => r.routeWarning === routeName);
+// Whitelist: all and route-warnings anywhere; section:<name> only on keep;
+// last-handover only on chronicle; due only on patrol-check.
+export function isValidStopRead(target: string, read: string): boolean {
+  if (read === 'all' || read === 'route-warnings') return true;
+  const section = /^section:(.+)$/.exec(read);
+  if (section) return target === 'keep' && (KEEP_SECTIONS as readonly string[]).includes(section[1]);
+  if (read === 'last-handover') return target === 'chronicle';
+  if (read === 'due') return target === 'patrol-check';
+  return false;
 }
 
-async function resolveKeepLines(castleDir: string, read: string, routeName: string): Promise<string[]> {
-  const keep = await readJsonFile<KeepFile>(keepJsonPath(castleDir));
-  const sectionMatch = /^section:(.+)$/.exec(read);
-  if (sectionMatch) {
-    const name = sectionMatch[1] as keyof KeepFile['sections'];
-    return factsOf(keep.sections[name] ?? []);
+export function invalidStopReason(stop: RouteStop): 'target' | 'read' | undefined {
+  if (!isValidStopTarget(stop.target)) return 'target';
+  if (!isValidStopRead(stop.target, stop.read)) return 'read';
+  return undefined;
+}
+
+export function patrolTriggerLine(trigger: PatrolTrigger): string {
+  switch (trigger.kind) {
+    case 'chronicle':
+      return `巡查到期：chronicle 未整理 ${trigger.count} 筆 ≥ ${trigger.limit}`;
+    case 'room':
+      return `巡查到期：${trigger.target} ${trigger.count} 筆 > ${trigger.limit}`;
+    case 'keep':
+      return `巡查到期：keep ${trigger.count} 筆 > ${trigger.limit}`;
+    case 'days':
+      if (trigger.reason === 'neverPatrolled') return `巡查到期：從未巡查（城堡建立 ${trigger.count} 天）`;
+      return `巡查到期：距上次巡查 ${trigger.count} 天 > ${trigger.limit}`;
   }
-  const all = [...keep.sections.identity, ...keep.sections.constraints, ...keep.sections.core];
-  if (read === 'route-warnings') return factsOf(filterRouteWarnings(all, routeName));
-  return factsOf(all);
-}
-
-async function resolveChronicleLines(castleDir: string, read: string, routeName: string): Promise<string[]> {
-  const file = await readJsonFile<ChronicleFile>(chronicleJsonPath(castleDir));
-  if (read === 'route-warnings') return factsOf(filterRouteWarnings(file.entries, routeName));
-  return factsOf(file.entries);
-}
-
-function resolveRoomLines(room: RoomFile, read: string, routeName: string): string[] {
-  if (read === 'route-warnings') return factsOf(filterRouteWarnings(room.records, routeName));
-  return factsOf(room.records);
 }
 
 export async function planWalk(castleDir: string, routeName: string, opts: PlanWalkOptions = {}): Promise<WalkPlan> {
@@ -51,70 +83,79 @@ export async function planWalk(castleDir: string, routeName: string, opts: PlanW
   const route = await routes.get(routeName);
   if (!route) throw new NotFoundError(`route ${routeName}`);
 
+  const now = opts.now ?? new Date();
+  const root = opts.root ?? resolve(castleDir, '..', '..');
+  const { budgets } = await readCastleMeta(castleDir);
   const rooms = makeRoomsCollection(castleDir);
   const allRooms = await rooms.list(); // fixed order: sorted by slug
 
+  const lineOf = (r: CastleRecord) => (isStale(r, budgets, now) ? `${HYPOTHESIS_MARK}${r.fact}` : r.fact);
+  const linesOf = (records: CastleRecord[], read: string) =>
+    (read === 'route-warnings' ? records.filter((r) => r.routeWarning === routeName) : records).map(lineOf);
+  const roomStop = (room: RoomFile, read: string): WalkStop => ({
+    target: `room:${room.slug}`,
+    read,
+    lines: linesOf(room.records, read),
+    skipped: false,
+  });
+
   const stops: WalkStop[] = [];
+  const unmatchedPaths: string[] = [];
 
   for (const stop of route.stops) {
-    if (stop.target === 'keep') {
-      stops.push({ target: 'keep', read: stop.read, lines: await resolveKeepLines(castleDir, stop.read, routeName), skipped: false });
-    } else if (stop.target === 'chronicle') {
-      stops.push({
-        target: 'chronicle',
-        read: stop.read,
-        lines: await resolveChronicleLines(castleDir, stop.read, routeName),
-        skipped: false,
-      });
-    } else if (stop.target === 'routes') {
-      const allRoutes = await routes.list();
-      stops.push({ target: 'routes', read: stop.read, lines: allRoutes.map((r) => r.name), skipped: false });
-    } else if (stop.target === 'rooms-by-locus') {
-      const matched = opts.paths && opts.paths.length > 0 ? roomsForPaths(allRooms, opts.paths) : [];
-      for (const room of matched) {
-        stops.push({
-          target: `room:${room.slug}`,
-          read: stop.read,
-          lines: resolveRoomLines(room, stop.read, routeName),
-          skipped: false,
-        });
+    const { target, read } = stop;
+    if (invalidStopReason(stop)) {
+      stops.push({ target, read, lines: [], skipped: true });
+    } else if (target === 'keep') {
+      const keep = await readJsonFile<KeepFile>(keepJsonPath(castleDir));
+      const section = /^section:(.+)$/.exec(read);
+      const records = section
+        ? keep.sections[section[1] as (typeof KEEP_SECTIONS)[number]]
+        : KEEP_SECTIONS.flatMap((s) => keep.sections[s]);
+      stops.push({ target, read, lines: linesOf(records, read), skipped: false });
+    } else if (target === 'chronicle') {
+      const { entries } = await readJsonFile<ChronicleFile>(chronicleJsonPath(castleDir));
+      const handover = read === 'last-handover' ? newestHandover(entries) : undefined;
+      const lines = read === 'last-handover' ? (handover ? [lineOf(handover)] : []) : linesOf(entries, read);
+      stops.push({ target, read, lines, skipped: false });
+    } else if (target === 'routes') {
+      const names = read === 'route-warnings' ? [] : (await routes.list()).map((r) => r.name);
+      stops.push({ target, read, lines: names, skipped: false });
+    } else if (target === 'patrol-check') {
+      const lines = read === 'route-warnings' ? [] : (await patrolDue(castleDir, now)).triggers.map(patrolTriggerLine);
+      stops.push({ target, read, lines, skipped: false });
+    } else if (target === 'rooms-by-locus') {
+      if (!opts.paths || opts.paths.length === 0) {
+        stops.push({ target, read, lines: [], skipped: false, deferred: true });
+        continue;
       }
-    } else if (stop.target === 'all-rooms') {
-      for (const room of allRooms) {
-        stops.push({
-          target: `room:${room.slug}`,
-          read: stop.read,
-          lines: resolveRoomLines(room, stop.read, routeName),
-          skipped: false,
-        });
-      }
-    } else if (stop.target.startsWith('room:')) {
-      const slug = stop.target.slice('room:'.length);
-      const room = await rooms.get(slug);
-      if (room) {
-        stops.push({
-          target: stop.target,
-          read: stop.read,
-          lines: resolveRoomLines(room, stop.read, routeName),
-          skipped: false,
-        });
-      } else {
-        stops.push({ target: stop.target, read: stop.read, lines: [], skipped: true });
-      }
+      const match = matchPathsToRooms(allRooms, opts.paths, root);
+      for (const p of match.unmatchedPaths) if (!unmatchedPaths.includes(p)) unmatchedPaths.push(p);
+      for (const room of match.rooms) stops.push(roomStop(room, read));
+    } else if (target === 'all-rooms') {
+      for (const room of allRooms) stops.push(roomStop(room, read));
     } else {
-      throw new Error(`unknown route stop target: ${stop.target}`);
+      const room = allRooms.find((r) => r.slug === target.slice('room:'.length));
+      stops.push(room ? roomStop(room, read) : { target, read, lines: [], skipped: true });
     }
   }
 
-  return { routeName, stops };
+  return { routeName, stops, unmatchedPaths };
 }
 
 export function walkReport(plan: WalkPlan): WalkReport {
   const roomStops = plan.stops.filter((s) => s.target.startsWith('room:'));
   const total = roomStops.length;
   const visited = roomStops.filter((s) => !s.skipped).length;
-  const warnings = plan.stops.reduce((sum, s) => (s.read === 'route-warnings' ? sum + s.lines.length : sum), 0);
+  const warnings = plan.stops.reduce((sum, s) => {
+    if (s.skipped) return sum;
+    if (s.read === 'route-warnings' || s.target === 'patrol-check') return sum + s.lines.length;
+    return sum;
+  }, 0);
+  const deferred = plan.stops.filter((s) => s.deferred).length;
   const valid = plan.stops.every((s) => !s.skipped);
-  const text = `巡行 ${visited}/${total} 房，發現 ${warnings} 項注意`;
-  return { visited, total, warnings, valid, text };
+  let text = `巡行 ${visited}/${total} 房，發現 ${warnings} 項注意`;
+  if (deferred > 0) text += `；延後 ${deferred} 站`;
+  if (plan.unmatchedPaths.length > 0) text += `；無對應房間：${plan.unmatchedPaths.join('、')}`;
+  return { visited, total, warnings, deferred, unmatchedPaths: plan.unmatchedPaths, valid, text };
 }

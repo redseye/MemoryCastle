@@ -5,12 +5,14 @@
 import type {
   CastleOverview,
   CastleRecord,
+  DoctorReport,
   ImportApplySummary,
   ImportPreviewResult,
   KeepSection,
   KeepSections,
   PatrolJob,
   ProjectRegistration,
+  StaleDecision,
   RecordInput,
   RoomFile,
   RoomInput,
@@ -199,6 +201,12 @@ export function getRoutes(id: string): Promise<{ routes: RouteDef[] }> {
   return get(`/projects/${id}/routes`);
 }
 
+// ---- doctor ----
+
+export function getDoctorReport(id: string): Promise<DoctorReport> {
+  return get(`/projects/${id}/doctor`);
+}
+
 // ---- walks ----
 
 export function walk(id: string, route: string, paths?: string[]): Promise<WalkResponse> {
@@ -207,16 +215,25 @@ export function walk(id: string, route: string, paths?: string[]): Promise<WalkR
 
 // ---- patrol ----
 
-export function runPatrol(id: string): Promise<PatrolJob> {
-  return post(`/projects/${id}/patrol`);
+export function runPatrol(id: string, full = false): Promise<PatrolJob> {
+  return post(`/projects/${id}/patrol`, full ? { full: true } : undefined);
 }
 
 export function getPatrolJob(id: string, jobId: string): Promise<PatrolJob> {
   return get(`/projects/${id}/patrol/jobs/${jobId}`);
 }
 
-export function applyPatrol(id: string, jobId: string, approvals: string[]): Promise<PatrolJob> {
-  return post(`/projects/${id}/patrol/jobs/${jobId}/apply`, { approvals });
+export function applyPatrol(
+  id: string,
+  jobId: string,
+  approvals: string[],
+  decisions: Record<string, StaleDecision> = {},
+): Promise<PatrolJob> {
+  return post(`/projects/${id}/patrol/jobs/${jobId}/apply`, { approvals, decisions });
+}
+
+export function cancelPatrol(id: string): Promise<{ cancelled: true }> {
+  return post(`/projects/${id}/patrol/cancel`);
 }
 
 // ---- import ----

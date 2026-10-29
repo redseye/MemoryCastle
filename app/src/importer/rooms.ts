@@ -2,10 +2,11 @@
 // `emblem:` metadata lines, and record lines. locus/adjacent are split on
 // ／、, ; adjacent "none" (case-insensitive) means no adjacent rooms.
 
+import { DEFAULT_BUDGETS } from '../core/init.js';
 import type { CastleRecord } from '../core/types.js';
 import type { ImportWarning, ParsedRoom } from './types.js';
 import { isBlank, isBoilerplate, splitLines } from './line-helpers.js';
-import { parseRecordLine } from './record-line.js';
+import { factLengthWarning, parseRecordLine } from './record-line.js';
 
 const NAME_RE = /^#\s*Room:\s*(.+)$/i;
 const LOCUS_RE = /^locus:\s*(.*)$/i;
@@ -24,7 +25,12 @@ export interface ParseRoomResult extends ParsedRoom {
   warnings: ImportWarning[];
 }
 
-export function parseRoomMd(content: string, slug: string, file: string): ParseRoomResult {
+export function parseRoomMd(
+  content: string,
+  slug: string,
+  file: string,
+  factMaxChars = DEFAULT_BUDGETS.factMaxChars,
+): ParseRoomResult {
   let name = slug;
   let locus: string[] = [];
   let adjacent: string[] = [];
@@ -68,6 +74,8 @@ export function parseRoomMd(content: string, slug: string, file: string): ParseR
     const record = parseRecordLine(line);
     if (record) {
       records.push(record);
+      const tooLong = factLengthWarning(record, factMaxChars, file, lineNo, line);
+      if (tooLong) warnings.push(tooLong);
       return;
     }
 

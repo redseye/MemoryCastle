@@ -21,8 +21,11 @@ import { judgeWithRetry } from './judge-helpers.js';
 // client or SDK error instances.
 export interface AnthropicClientLike {
   messages: {
+    // Second arg mirrors the SDK's RequestOptions ({ signal } is the field
+    // patrol cancel needs — verified against
+    // @anthropic-ai/sdk/internal/request-options.d.ts).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    create(params: any): Promise<any>;
+    create(params: any, options?: any): Promise<any>;
   };
   models: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,19 +66,31 @@ export function createAnthropicService(config: AnthropicServiceConfig, clientOve
     },
 
     async judge<T>(task: JudgeTask<T>): Promise<T> {
+      // A shared context block goes first and carries the cache breakpoint,
+      // so every call of one patrol re-reads it from the prompt cache
+      // (system is cached ahead of messages); with no context the system
+      // prompt stays a plain string.
       const baseParams = {
         model: config.model,
         max_tokens: task.maxTokens ?? DEFAULT_MAX_TOKENS,
-        system: task.system,
+        system: task.context
+          ? [
+              { type: 'text' as const, text: task.context, cache_control: { type: 'ephemeral' as const } },
+              { type: 'text' as const, text: task.system },
+            ]
+          : task.system,
         output_config: { format: { type: 'json_schema' as const, schema: task.schema } },
       };
 
       const callOnce = async () => {
         try {
-          const response = await client.messages.create({
-            ...baseParams,
-            messages: [{ role: 'user', content: task.user }],
-          });
+          const response = await client.messages.create(
+            {
+              ...baseParams,
+              messages: [{ role: 'user', content: task.user }],
+            },
+            { signal: task.signal },
+          );
           return extractText(response);
         } catch (err) {
           if (isUnauthorized(err)) throw new InvalidApiKeyError('anthropic');
@@ -85,17 +100,20 @@ export function createAnthropicService(config: AnthropicServiceConfig, clientOve
 
       const callRetry = async (previousRawOutput: string, validationError: string) => {
         try {
-          const response = await client.messages.create({
-            ...baseParams,
-            messages: [
-              { role: 'user', content: task.user },
-              { role: 'assistant', content: previousRawOutput },
-              {
-                role: 'user',
-                content: `Your previous output failed JSON schema validation: ${validationError}\nReturn corrected JSON that matches the schema exactly, with no extra commentary.`,
-              },
-            ],
-          });
+          const response = await client.messages.create(
+            {
+              ...baseParams,
+              messages: [
+                { role: 'user', content: task.user },
+                { role: 'assistant', content: previousRawOutput },
+                {
+                  role: 'user',
+                  content: `Your previous output failed JSON schema validation: ${validationError}\nReturn corrected JSON that matches the schema exactly, with no extra commentary.`,
+                },
+              ],
+            },
+            { signal: task.signal },
+          );
           return extractText(response);
         } catch (err) {
           if (isUnauthorized(err)) throw new InvalidApiKeyError('anthropic');

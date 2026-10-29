@@ -31,9 +31,12 @@
 // directory instead of the real filesystem. Every agy invocation below
 // passes --sandbox unconditionally — this is not optional hardening, it is
 // the difference between a failed judge() call and an uncontrolled process
-// reading the user's home directory. The per-call timeout (CLI_CALL_TIMEOUT_MS)
-// is the second line of defense if a bad model still wastes time inside the
-// sandbox.
+// reading the user's home directory. The per-call timeout was the second
+// line of defense here, but CLI_CALL_TIMEOUT_MS is now 0 (= disabled, see
+// constants.ts) — real patrol calls on a mid-size castle legitimately run
+// past any fixed ceiling — so --sandbox plus the user-triggered cancel
+// (JudgeTask.signal, threaded through execChild below and wired up to
+// POST /projects/:id/patrol/cancel) are the containment for agy now.
 //
 // Windows spawn note: claude and agy resolve to real .exe files (spawn
 // directly, shell:false — safe for arbitrary prompt content since no shell
@@ -55,7 +58,7 @@ import type { LlmConfig, LlmProviderId } from '../config/types.js';
 import { LlmNotConfiguredError } from '../server/llm-seam.js';
 import type { JudgeTask, LlmService } from '../server/llm-seam.js';
 import { CLI_BINARY_NAMES, CLI_CALL_TIMEOUT_MS } from './constants.js';
-import { judgeWithRetry } from './judge-helpers.js';
+import { judgeWithRetry, systemWithContext } from './judge-helpers.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -80,6 +83,20 @@ export class CliInvocationError extends Error {
   }
 }
 
+// Thrown when the caller's AbortSignal fires (patrol cancel) while a CLI
+// child is spawning or running. Same non-LlmNotConfiguredError family as
+// CliTimeoutError/CliInvocationError above — patrolFlow.ts is the only
+// current caller that sets JudgeTask.signal, and it normalizes this (and any
+// other abort-triggered rejection) into its own PatrolCancelledError before
+// the error reaches the route, so app.ts's onError never has to know about
+// this class specifically.
+export class CliCancelledError extends Error {
+  constructor(command: string) {
+    super(`${command} 已由使用者取消。`);
+    this.name = 'CliCancelledError';
+  }
+}
+
 // --- spawn seam (test injection point, mirrors *ClientLike in the HTTP adapters) ---
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,8 +105,9 @@ export type SpawnFn = (command: string, args: string[], options: any) => any;
 export interface CliOverrides {
   spawnFn?: SpawnFn;
   resolveBinaryFn?: (name: string) => Promise<string | null>;
-  // Test-only seam: real callers always get CLI_CALL_TIMEOUT_MS. Overriding
-  // lets the timeout/kill unit test run in milliseconds instead of 120s.
+  // Test-only seam: real callers always get CLI_CALL_TIMEOUT_MS (0 = no
+  // timeout). Overriding with a small positive value lets the timeout/kill
+  // unit test exercise the kill path in milliseconds.
   timeoutMs?: number;
 }
 
@@ -170,9 +188,17 @@ function execChild(
   spawnFn: SpawnFn,
   command: string,
   args: string[],
-  opts: { stdinData?: string; timeoutMs: number },
+  opts: { stdinData?: string; timeoutMs: number; signal?: AbortSignal },
 ): Promise<ExecResult> {
   return new Promise((resolve, reject) => {
+    // Cancelled before we ever got here (e.g. cancel arrived while the
+    // previous judge call in a sequential patrol run was still wrapping up)
+    // — never spawn at all.
+    if (opts.signal?.aborted) {
+      reject(new CliCancelledError(command));
+      return;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let child: any;
     try {
@@ -191,12 +217,34 @@ function execChild(
     let stderr = '';
     let settled = false;
 
-    const timer = setTimeout(() => {
+    // timeoutMs <= 0 means "no per-call timeout" (CLI_CALL_TIMEOUT_MS = 0):
+    // the call runs until the child exits on its own or is cancelled.
+    const timer =
+      opts.timeoutMs > 0
+        ? setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            killChild(child);
+            reject(new CliTimeoutError(command, opts.timeoutMs));
+          }, opts.timeoutMs)
+        : undefined;
+
+    const onAbort = () => {
       if (settled) return;
       settled = true;
+      cleanup();
       killChild(child);
-      reject(new CliTimeoutError(command, opts.timeoutMs));
-    }, opts.timeoutMs);
+      reject(new CliCancelledError(command));
+    };
+    opts.signal?.addEventListener('abort', onAbort);
+
+    // Clears the timer and drops the abort listener so a settled call never
+    // leaks either — called from every settle path below.
+    function cleanup(): void {
+      clearTimeout(timer);
+      opts.signal?.removeEventListener('abort', onAbort);
+    }
 
     child.stdout?.on('data', (d: Buffer | string) => {
       stdout += d.toString();
@@ -208,14 +256,14 @@ function execChild(
     child.on('error', (err: NodeJS.ErrnoException) => {
       if (settled) return;
       settled = true;
-      clearTimeout(timer);
+      cleanup();
       reject(err.code === 'ENOENT' ? new CliInvocationError(command, '找不到可執行檔') : err);
     });
 
     child.on('close', (code: number | null) => {
       if (settled) return;
       settled = true;
-      clearTimeout(timer);
+      cleanup();
       resolve({ stdout, stderr, code });
     });
 
@@ -232,7 +280,7 @@ function execChild(
 // structured-output modes would not generalize to codex/agy.
 
 function composePrompt(task: JudgeTask<unknown>): string {
-  return `${task.system}\n\n${task.user}\n\nReply with ONLY a single JSON object that matches this JSON Schema exactly. Do not include any commentary, explanation, or markdown code fences — output must be raw JSON only, parseable by JSON.parse.\n\nJSON Schema:\n${JSON.stringify(task.schema)}`;
+  return `${systemWithContext(task)}\n\n${task.user}\n\nReply with ONLY a single JSON object that matches this JSON Schema exactly. Do not include any commentary, explanation, or markdown code fences — output must be raw JSON only, parseable by JSON.parse.\n\nJSON Schema:\n${JSON.stringify(task.schema)}`;
 }
 
 function composeRetryPrompt(basePrompt: string, previousRawOutput: string, validationError: string): string {
@@ -279,6 +327,7 @@ async function runClaude(
   model: string | undefined,
   timeoutMs: number,
   spawnFn: SpawnFn,
+  signal?: AbortSignal,
 ): Promise<string> {
   // Judge calls are pure classification completions, not coding sessions —
   // but a bare `claude -p` still boots a full agent session: user MCP
@@ -308,6 +357,7 @@ async function runClaude(
   const { stdout, stderr, code } = await execChild(spawnFn, invocation.command, invocation.args, {
     stdinData: prompt,
     timeoutMs,
+    signal,
   });
   if (code !== 0) throwClassified('claude', 'claude auth login', `${stdout}\n${stderr}`);
 
@@ -334,6 +384,7 @@ async function runCodex(
   model: string | undefined,
   timeoutMs: number,
   spawnFn: SpawnFn,
+  signal?: AbortSignal,
 ): Promise<string> {
   const outputFile = join(tmpdir(), `memorycastle-codex-${randomUUID()}.txt`);
   try {
@@ -350,6 +401,7 @@ async function runCodex(
     const { stdout, stderr, code } = await execChild(spawnFn, invocation.command, invocation.args, {
       stdinData: prompt,
       timeoutMs,
+      signal,
     });
     if (code !== 0) throwClassified('codex', 'codex login', `${stdout}\n${stderr}`);
 
@@ -373,6 +425,7 @@ async function runAgy(
   model: string | undefined,
   timeoutMs: number,
   spawnFn: SpawnFn,
+  signal?: AbortSignal,
 ): Promise<string> {
   // --sandbox is mandatory — see the file-level comment for why. Prompt goes
   // via argv, not stdin (agy has no stdin support) — safe only because agy
@@ -381,7 +434,7 @@ async function runAgy(
   // cmd.exe wrapper would re-parse this argv through cmd.exe's own special
   // characters, which JSON-shaped prompt text is not guaranteed to survive.
   const invocation = buildInvocation(binaryPath, bareName, ['-p', prompt, '--sandbox', ...(model ? ['--model', model] : [])]);
-  const { stdout, stderr, code } = await execChild(spawnFn, invocation.command, invocation.args, { timeoutMs });
+  const { stdout, stderr, code } = await execChild(spawnFn, invocation.command, invocation.args, { timeoutMs, signal });
   if (code !== 0) throwClassified('agy', '依 agy 官方文件完成登入（agy 目前未提供獨立 login 子指令）', `${stdout}\n${stderr}`);
   return extractJsonObjectText(stdout);
 }
@@ -393,6 +446,7 @@ type RunFn = (
   model: string | undefined,
   timeoutMs: number,
   spawnFn: SpawnFn,
+  signal?: AbortSignal,
 ) => Promise<string>;
 
 interface CliAdapterDef {
@@ -439,7 +493,7 @@ export function createCliService(cfg: LlmConfig, overrides: CliOverrides = {}): 
     async judge<T>(task: JudgeTask<T>): Promise<T> {
       const binaryPath = await resolveOrThrow();
       const basePrompt = composePrompt(task);
-      const callOnce = () => adapter.run(binaryPath, adapter.binary, basePrompt, model, timeoutMs, spawnFn);
+      const callOnce = () => adapter.run(binaryPath, adapter.binary, basePrompt, model, timeoutMs, spawnFn, task.signal);
       const callRetry = (previousRawOutput: string, validationError: string) =>
         adapter.run(
           binaryPath,
@@ -448,6 +502,7 @@ export function createCliService(cfg: LlmConfig, overrides: CliOverrides = {}): 
           model,
           timeoutMs,
           spawnFn,
+          task.signal,
         );
       return judgeWithRetry<T>(task.schema, callOnce, callRetry);
     },

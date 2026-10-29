@@ -14,6 +14,7 @@ export interface CastleRecord {
   fact: string;
   tags: string[];
   routeWarning?: string;
+  verifiedAt?: string; // YYYY-MM-DD: last day the fact was re-verified
 }
 
 export interface RecordInput {
@@ -60,6 +61,7 @@ export interface Budgets {
   chronicleSweep: number;
   patrolDays: number;
   stalenessDays: number;
+  factMaxChars: number;
 }
 
 export interface BudgetCounts {
@@ -67,6 +69,8 @@ export interface BudgetCounts {
   chronicleCount: number;
   rooms: { slug: string; count: number }[];
   maxRoomCount: number;
+  /** GET /castle only: entries dated after lastPatrolAt — what trigger 1 compares with chronicleSweep. */
+  chronicleSinceLastPatrol?: number;
 }
 
 export interface PatrolDueResult {
@@ -79,6 +83,38 @@ export interface CastleOverview {
   counts: BudgetCounts;
   patrolDue: PatrolDueResult;
   lastPatrolAt: string | null;
+}
+
+export type DoctorFindingKind =
+  | 'handover-drift'
+  | 'uncommitted-drift'
+  | 'patrol-due'
+  | 'locus-orphan'
+  | 'locus-unreachable'
+  | 'route-gap'
+  | 'route-outdated'
+  | 'route-target-invalid'
+  | 'route-read-invalid'
+  | 'route-warning-invalid'
+  | 'over-budget'
+  | 'oversize-record'
+  | 'stale-records'
+  | 'git';
+
+export type DoctorSeverity = 'ok' | 'info' | 'warn' | 'error';
+
+export interface DoctorFinding {
+  kind: DoctorFindingKind;
+  severity: DoctorSeverity;
+  target: string;
+  detail: string;
+}
+
+export interface DoctorReport {
+  checkedAt: string;
+  root: string;
+  status: 'ok' | 'warn' | 'error';
+  findings: DoctorFinding[];
 }
 
 export interface WalkStopResult {
@@ -111,7 +147,7 @@ export interface RouteDef {
   stops: RouteStop[];
 }
 
-export type WarningKind = 'over-budget' | 'stale' | 'route-gap';
+export type WarningKind = 'over-budget' | 'stale' | 'route-gap' | 'fact-dropped';
 
 export interface PatrolWarning {
   kind: WarningKind;
@@ -119,8 +155,19 @@ export interface PatrolWarning {
   detail: string;
 }
 
-export type ProposalKind = 'roomRecord' | 'roomCreate' | 'contradiction' | 'keepPromotion';
+export type ProposalKind =
+  | 'roomRecord'
+  | 'roomCreate'
+  | 'contradiction'
+  | 'keepPromotion'
+  | 'chronicleSweep'
+  | 'staleReview'
+  | 'recordSplit'
+  | 'roomDistill'
+  | 'keepCut';
 export type ProposalTier = 'green' | 'yellow';
+/** staleReview proposals apply only with one of these picked (apply body `decisions`). */
+export type StaleDecision = 'verify' | 'archive' | 'delete';
 
 export interface PatrolProposal {
   id: string;
@@ -133,12 +180,17 @@ export interface PatrolProposal {
 export interface PatrolApplyReport {
   appliedIds: string[];
   skippedYellowIds: string[];
+  failed: { id: string; reason: 'not_found' | 'over_budget' | 'fact_too_long' | 'newest_handover' }[];
+  patrolledAt: string | null;
 }
 
 export interface PatrolJob {
   id: string;
   status: 'proposed' | 'applied';
   createdAt: string;
+  mode: 'incremental' | 'full';
+  complete: boolean;
+  stats: { llmCalls: number; promptChars: number };
   warnings: PatrolWarning[];
   proposals: PatrolProposal[];
   applyReport?: PatrolApplyReport;

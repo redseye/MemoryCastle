@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-// memorycastle CLI. M1 implements `init`; M2 adds `import`; M3 adds `serve`.
+// memorycastle CLI. M1 implements `init`; M2 adds `import`; M3 adds `serve`;
+// `doctor` and `measure` are read-only reports over an existing castle.
 
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { CastleExistsError, initCastle } from './core/index.js';
+import { CastleExistsError, initCastle, measureCastle, runDoctor } from './core/index.js';
 import { getPort, readConfig } from './config/index.js';
 import { importApply, importPreview } from './importer/index.js';
 import { startServer } from './server/index.js';
@@ -81,6 +82,59 @@ export async function runCli(argv: string[]): Promise<number> {
     }
   }
 
+  if (cmd === 'doctor') {
+    const dir = rest[0];
+    if (!dir) {
+      console.error('Usage: memorycastle doctor <project-root> ／ 用法：memorycastle doctor <專案根目錄>');
+      return 1;
+    }
+    try {
+      const report = await runDoctor(dir);
+      console.log(`Castle doctor report: ${report.root} (checked ${report.checkedAt}) ／ 城堡健康檢查報告`);
+      for (const f of report.findings) {
+        console.log(`  [${f.severity}] ${f.kind} — ${f.target}：${f.detail}`);
+      }
+      console.log(`Overall status: ${report.status} ／ 整體狀態：${report.status}`);
+      return report.status === 'ok' ? 0 : 1;
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err));
+      return 1;
+    }
+  }
+
+  if (cmd === 'measure') {
+    const dir = rest[0] ?? process.cwd();
+    try {
+      const m = await measureCastle(dir);
+      const s = m.sessionStart;
+      const st = m.sessionStartStored;
+      const ratio = (r: number | null) => (r === null ? 'n/a' : r.toFixed(2));
+      console.log(
+        `Token estimate for ${m.root} — estimate only: CJK chars ×1 + other chars ÷4 ／ ` +
+          '城堡 token 估算（估算法：CJK 字 ×1＋其他字元 ÷4，僅供比較）',
+      );
+      console.log(
+        `  (a) session-start: patrol-check ${s.patrolCheck} + keep ${s.keep} + last handover ${s.lastHandover} + ` +
+          `room mean ${s.roomMean} / max ${s.roomMax}${m.maxRoomSlug ? ` (${m.maxRoomSlug})` : ''} = ` +
+          `${s.totalMean} / ${s.totalMax} ／ 開工載入（§2 單行計）`,
+      );
+      console.log(
+        `  (a') session-start, JSON as stored on disk: keep ${st.keep} + last handover ${st.lastHandover} + ` +
+          `room mean ${st.roomMean} / max ${st.roomMax} = ${st.totalMean} / ${st.totalMax} ／ 同上，以磁碟上的 JSON 原文計`,
+      );
+      console.log(`  (b) flat-file equivalent: ${m.flat.records} live records = ${m.flat.tokens} ／ 全量平鋪等價（所有活記錄的 §2 單行）`);
+      console.log(`  (c) patrol payload: ${m.patrol} ／ 巡查載入量`);
+      console.log(
+        `  Ratio a/b: ${ratio(m.ratioMean)} (mean room) / ${ratio(m.ratioMax)} (max room) ／ ` +
+          `比值 a/b：${ratio(m.ratioMean)}（平均房）／${ratio(m.ratioMax)}（最大房）`,
+      );
+      return 0;
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err));
+      return 1;
+    }
+  }
+
   if (cmd === 'serve') {
     const portIdx = rest.indexOf('--port');
     const portArg = portIdx !== -1 ? Number(rest[portIdx + 1]) : undefined;
@@ -117,7 +171,9 @@ export async function runCli(argv: string[]): Promise<number> {
     });
   }
 
-  console.error('Usage: memorycastle init <dir> [--name X] | serve | import <dir> ／ 用法：memorycastle init <dir> [--name X] | serve | import <dir>');
+  console.error(
+    'Usage: memorycastle init <dir> [--name X] | serve | import <dir> | doctor <dir> | measure [dir] ／ 用法：memorycastle init <dir> [--name X] | serve | import <dir> | doctor <dir> | measure [dir]',
+  );
   return 1;
 }
 

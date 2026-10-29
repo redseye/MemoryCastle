@@ -2,46 +2,17 @@
   "schema": 1,
   "slug": "web-ui-rest-api-llm",
   "name": "應用程式（Web UI／REST API／LLM 轉接層）",
-  "locus": [
-    "app/**"
-  ],
+  "locus": ["app/**"],
   "adjacent": [],
   "emblem": null,
   "createdAt": "2026-07-08",
   "records": [
-    {
-      "id": "q2rd13ii",
-      "date": "2026-07-08",
-      "confidence": "high",
-      "source": "patrol",
-      "fact": "v0.4 已產品化出貨（app/ 本機工具含 Web UI、REST API、三家 LLM adapter、JSON 儲存與 markdown 匯入器，155 測試全綠、六里程碑獨立驗收），並依使用者決策將真城堡遷移為 JSON（原 .md 備份於 archive/markdown-original/）、architecture §9 標註落地、預算語意統一為記錄筆數且成果 commit 不需單號，下一步待使用者填入真 API key 做三家 adapter 的 live smoke 驗證（含 Gemini 無效金鑰錯誤碼）。",
-      "tags": [
-        "milestone",
-        "decision",
-        "handover"
-      ]
-    },
-    {
-      "id": "e9xdesrv",
-      "date": "2026-07-09",
-      "confidence": "high",
-      "source": "user",
-      "fact": "Electron 桌面版 exe 是本專案預設的長駐伺服器（7420 埠、attach-or-own，生命週期由使用者掌控）——session 中不要自己起 memorycastle serve 或 vite dev 長駐，session 結束行程就斷、UI 會莫名失聯；一次性子命令（build／test／init／import）可用。",
-      "tags": [
-        "workflow",
-        "constraint"
-      ]
-    },
-    {
-      "id": "a2sarpkg",
-      "date": "2026-07-09",
-      "confidence": "high",
-      "source": "session",
-      "fact": "portable exe 以 asar 內嵌 dist/**——改前端或伺服器程式後必須 npm run dist:electron 重打包才會生效（光 build:all 不夠）；舊 exe 開著會鎖住輸出檔，打包停在 waiting for unlock 直到使用者關閉桌面版。",
-      "tags": [
-        "build",
-        "lesson"
-      ]
-    }
+    {"id":"e9xdesrv","date":"2026-07-09","confidence":"high","source":"user","fact":"Electron 桌面版 exe 是本專案預設的長駐伺服器（7420 埠、attach-or-own，生命週期由使用者掌控）——session 中不要自己起 memorycastle serve 或 vite dev 長駐，session 結束行程就斷、UI 會莫名失聯；一次性子命令（build／test／init／import）可用。","tags":["workflow","constraint"]},
+    {"id":"a2sarpkg","date":"2026-07-09","confidence":"high","source":"session","fact":"portable exe 以 asar 內嵌 dist/**——改前端或伺服器程式後必須 npm run dist:electron 重打包才會生效（光 build:all 不夠）；舊 exe 開著會鎖住輸出檔，打包停在 waiting for unlock 直到使用者關閉桌面版。","tags":["build","lesson"],"verifiedAt":"2026-10-28"},
+    {"id":"1m2ach3a","date":"2026-07-07","confidence":"high","source":"chronicle:devm7less","fact":"electron@43 的 install.js 以 require() 載入純 ESM 的 @electron/get，從零 npm install 後抓不到執行檔：須手動解壓 win32-x64 release 進 node_modules/electron/dist/ 並寫 path.txt（步驟見 app/README.md）。","tags":["build","lesson"],"verifiedAt":"2026-10-28"},
+    {"id":"mfxdrg9k","date":"2026-07-07","confidence":"high","source":"chronicle:devm7less","fact":"electron-builder 釘死 26.13.0：26.15.x 起 app-builder-lib 直接依賴純 ESM 的 @noble/hashes，blockmap 雜湊會炸；升版前先確認上游已修（見 app/README.md）。","tags":["build","lesson"],"verifiedAt":"2026-10-28"},
+    {"id":"yd8a2hsb","date":"2026-07-08","confidence":"high","source":"chronicle:devm8less","fact":"agy 遇到解析不了的 --model 不會乾淨失敗，會落入無限制 agentic 行為亂讀全機檔案——app/src/llm/cli.ts 對 agy 一律加 --sandbox，這是圍堵而非選配，不可移除。","tags":["llm","lesson"],"verifiedAt":"2026-10-28"},
+    {"id":"mm06r2tk","date":"2026-07-08","confidence":"high","source":"chronicle:devm8less","fact":"Windows 上 codex.cmd 等 CLI 裝在含空格路徑（如 Program Files）時，shell:true 會讓 cmd.exe 誤斷詞——改以 cmd.exe /d /s /c <裸名>（shell:false）呼叫（app/src/llm/cli.ts）。","tags":["llm","lesson","windows"],"verifiedAt":"2026-10-28"},
+    {"id":"ac2z35rx","date":"2026-07-08","confidence":"high","source":"chronicle:devm9pick","fact":"本機中文字經 Git Bash 的 curl -d 或子行程 stdout 傳遞會被 cp950 弄亂且原樣存檔——一律改走 UTF-8 檔案（curl --data-binary @檔案；pick-folder.ts 用 UTF-8 暫存檔）。","tags":["lesson","windows"],"verifiedAt":"2026-10-28"}
   ]
 }

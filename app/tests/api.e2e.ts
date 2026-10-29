@@ -3,7 +3,7 @@
 // projects, exercising every endpoint's status code and response shape.
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { cp, mkdir } from 'node:fs/promises';
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Hono } from 'hono';
@@ -348,11 +348,36 @@ describe('REST API e2e', () => {
   });
 
   describe('walks', () => {
-    it('reports N/N with the exact contracted text on a route with no matching rooms', async () => {
+    it('reports N/N with the exact contracted text; rooms-by-locus is deferred when no paths are given', async () => {
       const res = await req(app, 'POST', `/projects/${projectId}/walks`, { route: 'session-start' });
       expect(res.status).toBe(200);
       expect(res.json.stops.some((s: { target: string }) => s.target === 'keep')).toBe(true);
-      expect(res.json.report.text).toMatch(/^巡行 \d+\/\d+ 房，發現 \d+ 項注意$/);
+      expect(res.json.report.text).toBe('巡行 0/0 房，發現 0 項注意；延後 1 站');
+      expect(res.json.report.valid).toBe(true);
+      expect(res.json.stops.find((s: { target: string }) => s.target === 'rooms-by-locus')).toEqual({
+        target: 'rooms-by-locus',
+        lines: [],
+        deferred: true,
+      });
+    });
+
+    it('an invalid read value skips the stop and invalidates the walk (no 500)', async () => {
+      const castleRoutesPath = join(container, 'project', '.claude', 'castle', 'routes.json');
+      const routesFile = JSON.parse(await readFile(castleRoutesPath, 'utf8'));
+      routesFile.routes.push({ name: 'bad', occasion: 'test', stops: [{ target: 'keep', read: 'everything' }] });
+      await writeFile(castleRoutesPath, JSON.stringify(routesFile));
+      const res = await req(app, 'POST', `/projects/${projectId}/walks`, { route: 'bad' });
+      expect(res.status).toBe(200);
+      expect(res.json.report.valid).toBe(false);
+      expect(res.json.stops).toEqual([{ target: 'keep', lines: [], read: 'everything', skipped: true }]);
+    });
+
+    it('an absolute Windows-style path inside the project loads the owning room', async () => {
+      await req(app, 'POST', `/projects/${projectId}/rooms`, { name: 'App Room', locus: ['app/**'] });
+      const abs = join(container, 'project', 'App', 'src', 'core', 'locus.ts').replace(/\//g, '\\');
+      const res = await req(app, 'POST', `/projects/${projectId}/walks`, { route: 'session-start', paths: [abs] });
+      expect(res.json.report.text).toBe('巡行 1/1 房，發現 0 項注意');
+      expect(res.json.stops.map((s: { target: string }) => s.target)).toContain('room:app-room');
     });
 
     it('visits a locus-matched room when paths are given', async () => {
@@ -402,6 +427,159 @@ describe('REST API e2e', () => {
         'before-release',
         'patrol',
       ]);
+    });
+  });
+
+  describe('v0.5 record validation (contract C1/C2)', () => {
+    const base = { confidence: 'med', source: 'agent' };
+
+    it('accepts a 200-char fact and rejects a 201-char fact with 400 fact_too_long', async () => {
+      const ok = await req(app, 'POST', `/projects/${projectId}/chronicle/records`, { ...base, fact: '字'.repeat(200) });
+      expect(ok.status).toBe(201);
+      const tooLong = await req(app, 'POST', `/projects/${projectId}/chronicle/records`, { ...base, fact: '字'.repeat(201) });
+      expect(tooLong.status).toBe(400);
+      expect(tooLong.json.error.code).toBe('fact_too_long');
+    });
+
+    it('honors a castle-specific factMaxChars from castle.json', async () => {
+      const metaPath = join(container, 'project', '.claude', 'castle', 'castle.json');
+      const meta = JSON.parse(await readFile(metaPath, 'utf8'));
+      meta.budgets.factMaxChars = 10;
+      await writeFile(metaPath, JSON.stringify(meta));
+      const res = await req(app, 'POST', `/projects/${projectId}/chronicle/records`, { ...base, fact: 'x'.repeat(11) });
+      expect(res.status).toBe(400);
+      expect(res.json.error.code).toBe('fact_too_long');
+    });
+
+    it('defaults factMaxChars to 200 for a castle.json written before the field existed', async () => {
+      const metaPath = join(container, 'project', '.claude', 'castle', 'castle.json');
+      const meta = JSON.parse(await readFile(metaPath, 'utf8'));
+      delete meta.budgets.factMaxChars;
+      await writeFile(metaPath, JSON.stringify(meta));
+      const castle = await req(app, 'GET', `/projects/${projectId}/castle`);
+      expect(castle.json.budgets.factMaxChars).toBe(200);
+      const res = await req(app, 'POST', `/projects/${projectId}/chronicle/records`, { ...base, fact: 'x'.repeat(201) });
+      expect(res.json.error.code).toBe('fact_too_long');
+    });
+
+    it('rejects a multiline fact with 400 fact_multiline', async () => {
+      const res = await req(app, 'POST', `/projects/${projectId}/chronicle/records`, { ...base, fact: '第一行\n第二行' });
+      expect(res.status).toBe(400);
+      expect(res.json.error.code).toBe('fact_multiline');
+    });
+
+    it('rejects a routeWarning naming a route that does not exist, accepts an existing one', async () => {
+      const bad = await req(app, 'POST', `/projects/${projectId}/chronicle/records`, { ...base, fact: 'x', routeWarning: 'no-such-route' });
+      expect(bad.status).toBe(400);
+      expect(bad.json.error.code).toBe('route_warning_invalid');
+      const good = await req(app, 'POST', `/projects/${projectId}/chronicle/records`, { ...base, fact: 'x', routeWarning: 'before-release' });
+      expect(good.status).toBe(201);
+      expect(good.json.routeWarning).toBe('before-release');
+    });
+
+    it('accepts a YYYY-MM-DD verifiedAt and rejects a malformed one', async () => {
+      const good = await req(app, 'POST', `/projects/${projectId}/chronicle/records`, { ...base, fact: 'x', verifiedAt: '2026-10-28' });
+      expect(good.status).toBe(201);
+      expect(good.json.verifiedAt).toBe('2026-10-28');
+      for (const verifiedAt of ['2026/10/28', '2026-02-30', 20261028]) {
+        const bad = await req(app, 'POST', `/projects/${projectId}/chronicle/records`, { ...base, fact: 'x', verifiedAt });
+        expect(bad.status).toBe(400);
+        expect(bad.json.error.code).toBe('invalid_body');
+      }
+    });
+
+    it('applies the same fact cap to keep and room appends', async () => {
+      const keep = await req(app, 'POST', `/projects/${projectId}/keep/records`, {
+        ...base,
+        section: 'core',
+        confirm: true,
+        fact: 'x'.repeat(201),
+      });
+      expect(keep.json.error.code).toBe('fact_too_long');
+      const room = await req(app, 'POST', `/projects/${projectId}/rooms`, { name: 'Cap Room', locus: ['src/**'] });
+      const rec = await req(app, 'POST', `/projects/${projectId}/rooms/${room.json.slug}/records`, { ...base, fact: 'a\r\nb' });
+      expect(rec.json.error.code).toBe('fact_multiline');
+    });
+  });
+
+  describe('v0.5 write-time budgets', () => {
+    it('the 31st keep append is 409 over_budget; override:true lets it through with 201', async () => {
+      for (let i = 0; i < 30; i++) {
+        const res = await req(app, 'POST', `/projects/${projectId}/keep/records`, {
+          section: 'core',
+          confirm: true,
+          confidence: 'high',
+          source: 'user',
+          fact: `k${i}`,
+        });
+        expect(res.status).toBe(201);
+      }
+      const body = { section: 'identity', confirm: true, confidence: 'high', source: 'user', fact: 'k30' };
+      const refused = await req(app, 'POST', `/projects/${projectId}/keep/records`, body);
+      expect(refused.status).toBe(409);
+      expect(refused.json.error.code).toBe('over_budget');
+      const overridden = await req(app, 'POST', `/projects/${projectId}/keep/records`, { ...body, override: true });
+      expect(overridden.status).toBe(201);
+      const keep = await req(app, 'GET', `/projects/${projectId}/keep`);
+      expect(keep.json.sections.core.length + keep.json.sections.identity.length).toBe(31);
+    }, 30000);
+
+    it('a room at roomMax refuses the next record with 409 over_budget unless override:true', async () => {
+      const metaPath = join(container, 'project', '.claude', 'castle', 'castle.json');
+      const meta = JSON.parse(await readFile(metaPath, 'utf8'));
+      meta.budgets.roomMax = 2;
+      await writeFile(metaPath, JSON.stringify(meta));
+      const room = await req(app, 'POST', `/projects/${projectId}/rooms`, { name: 'Small Room', locus: ['src/**'] });
+      const path = `/projects/${projectId}/rooms/${room.json.slug}/records`;
+      const rec = { confidence: 'high', source: 'user', fact: 'r' };
+      expect((await req(app, 'POST', path, rec)).status).toBe(201);
+      expect((await req(app, 'POST', path, rec)).status).toBe(201);
+      const refused = await req(app, 'POST', path, rec);
+      expect(refused.status).toBe(409);
+      expect(refused.json.error.code).toBe('over_budget');
+      expect((await req(app, 'POST', path, { ...rec, override: true })).status).toBe(201);
+    });
+
+    it('a record append to a missing room is still 404', async () => {
+      const res = await req(app, 'POST', `/projects/${projectId}/rooms/ghost/records`, { confidence: 'high', source: 'user', fact: 'r' });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('v0.5 search and recall limits', () => {
+    it('search with neither q nor tag is 400 invalid_query (never "return everything")', async () => {
+      await req(app, 'POST', `/projects/${projectId}/chronicle/records`, { confidence: 'high', source: 'user', fact: 'x' });
+      for (const qs of ['', '?q=', '?q=%20&tag=']) {
+        const res = await req(app, 'GET', `/projects/${projectId}/recall/search${qs}`);
+        expect(res.status).toBe(400);
+        expect(res.json.error.code).toBe('invalid_query');
+      }
+    });
+
+    it('caps results at 20 by default and at most 100; rejects a non-positive limit', async () => {
+      const castleRoot = join(container, 'project', '.claude', 'castle', 'chronicle.json');
+      const chronicle = JSON.parse(await readFile(castleRoot, 'utf8'));
+      for (let i = 0; i < 120; i++) {
+        chronicle.entries.push({ id: `id${i}`, date: '2026-10-01', confidence: 'high', source: 'user', fact: `命中 ${i}`, tags: [] });
+      }
+      await writeFile(castleRoot, JSON.stringify(chronicle));
+      const byDefault = await req(app, 'GET', `/projects/${projectId}/recall/search?q=命中`);
+      expect(byDefault.json.results).toHaveLength(20);
+      const fifty = await req(app, 'GET', `/projects/${projectId}/recall/search?q=命中&limit=50`);
+      expect(fifty.json.results).toHaveLength(50);
+      const capped = await req(app, 'GET', `/projects/${projectId}/recall/search?q=命中&limit=500`);
+      expect(capped.json.results).toHaveLength(100);
+      const bad = await req(app, 'GET', `/projects/${projectId}/recall/search?q=命中&limit=0`);
+      expect(bad.status).toBe(400);
+      expect(bad.json.error.code).toBe('invalid_query');
+    });
+
+    it('fuzzy=true does not call the LLM when deterministic locus matching already found a room', async () => {
+      await req(app, 'POST', `/projects/${projectId}/rooms`, { name: 'Src Room', locus: ['src/**'] });
+      // No key configured: reaching the LLM would 409 llm_not_configured.
+      const res = await req(app, 'GET', `/projects/${projectId}/recall/standing?paths=src/index.ts&fuzzy=true`);
+      expect(res.status).toBe(200);
+      expect(res.json.rooms.map((r: { name: string }) => r.name)).toEqual(['Src Room']);
     });
   });
 

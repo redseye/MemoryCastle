@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "month": "2026-09",
+  "entries": [
+    {"id":"k4dq7m2v","date":"2026-09-10","confidence":"high","source":"session","fact":"狀態：三件事落地——(1) LLM CLI 每次呼叫逾時改為 0（關閉；54 筆城堡的矛盾檢查實測 162s，120s 上限會誤殺有效答案）；(2) 巡查可手動取消：AbortSignal 從 POST /projects/:id/patrol/cancel 穿過 patrolFlow 到三家 adapter 與 CLI 子行程（kill），UI 巡查頁加「取消」鈕，取消回 409 patrol_cancelled、同城堡重複巡查回 409 patrol_already_running；(3) 新增純程式碼的城堡健康檢查 doctor（交接漂移／未提交漂移／巡查到期／房間 locus 失聯／路線缺口），三出口＝CLI memorycastle doctor <root>、GET /projects/:id/doctor、Web UI「健康檢查」頁。216 測試綠、build 與 web typecheck 乾淨、fresh verifier 11/11 通過。doctor 首跑即抓到本城堡兩處真實失聯（architecture/**、castle-init.mjs），已修正為 docs/architecture.md 與 scripts/castle-init.mjs。／決定：逾時關閉後 agy 失控圍堵改靠 --sandbox＋使用者取消；doctor 不呼叫模型（R7：程式能答的交給程式）；doctor 使用錯誤 exit 1 沿用既有 CLI 慣例而非 2；漂移比較用日曆日而非時間戳。／下一步：doctor 回報 patrol-due（上次巡查 2026-07-06 已逾 30 天），下次 session 走 patrol 路線；前端與伺服器改動需 npm run dist:electron 重打包 exe 才生效；public repo 待下次 release 同步。 #handover","tags":["handover"],"sweptAt":"2026-10-28"}
+  ]
+}

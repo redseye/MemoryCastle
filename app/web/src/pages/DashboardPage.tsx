@@ -115,7 +115,7 @@ function RegisterProjectForm() {
   );
 }
 
-function GaugeBar({ label, count, max }: { label: string; count: number; max: number }) {
+function GaugeBar({ label, count, max, note }: { label: string; count: number; max: number; note?: string }) {
   const pct = max > 0 ? Math.min((count / max) * 100, 100) : 0;
   const over = count > max;
   return (
@@ -124,6 +124,7 @@ function GaugeBar({ label, count, max }: { label: string; count: number; max: nu
         <span>{label}</span>
         <span>
           {count}/{max}
+          {note}
         </span>
       </div>
       <div className="gauge-track">
@@ -154,7 +155,13 @@ function ProjectOverview({ projectId }: { projectId: string }) {
         </div>
       )}
       <GaugeBar label="Keep" count={data.counts.keepCount} max={data.budgets.keepMax} />
-      <GaugeBar label="Chronicle（未整理）" count={data.counts.chronicleCount} max={data.budgets.chronicleSweep} />
+      {/* 巡查觸發條件 1 只算上次巡查後的條目，所以量表以它為準；未整理總數保留在旁邊。 */}
+      <GaugeBar
+        label="Chronicle（上次巡查後）"
+        count={data.counts.chronicleSinceLastPatrol ?? data.counts.chronicleCount}
+        max={data.budgets.chronicleSweep}
+        note={`（未整理共 ${data.counts.chronicleCount} 筆）`}
+      />
       {data.counts.rooms.map((room) => (
         <GaugeBar key={room.slug} label={`房間：${room.slug}`} count={room.count} max={data.budgets.roomMax} />
       ))}

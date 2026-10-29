@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "month": "2026-10",
+  "entries": [
+    {"id":"ghwkm2gc","date":"2026-07-08","confidence":"high","source":"patrol","fact":"MemoryCastle 城堡於 2026-07-05 初始化完成；創始四決策底定（方法論先行、SDK後行，第一宿主為 Claude Code 原生，v0.1 用 Markdown+零依賴 Node、SDK 階段用 TypeScript，里程碑一＝設計文件＋骨架＋最小可運作實例），核心差異化定調「准入閘勝過全存」，最小可運作實例選擇自舉；過程中修復 castle-init.mjs 的 UTC 日期戳 bug（改用 toLocaleDateString('sv') 取本地日期，避免台灣時區跨日誤標）；里程碑一經獨立 verifier 驗收 6/6 全過（並補齊 SKILL.md 的 conf 三級定義），v0.1 已完成驗收且無待決事項，下一步待使用者擇一：真實專案 dogfood 或先審 architecture.md。","tags":["meta","decision","lesson","milestone","handover"],"archivedAt":"2026-10-28","archivedFrom":"room:room-rk7j1wj2","archiveNote":"v0.5 拆分複合 handover 記錄：日期戳教訓拆為 wa06qwv4；創始決策見 keep 06bbjkl6 與 architecture §8；其餘為過時的里程碑一驗收與下一步。"},
+    {"id":"q2rd13ii","date":"2026-07-08","confidence":"high","source":"patrol","fact":"v0.4 已產品化出貨（app/ 本機工具含 Web UI、REST API、三家 LLM adapter、JSON 儲存與 markdown 匯入器，155 測試全綠、六里程碑獨立驗收），並依使用者決策將真城堡遷移為 JSON（原 .md 備份於 archive/markdown-original/）、architecture §9 標註落地、預算語意統一為記錄筆數且成果 commit 不需單號，下一步待使用者填入真 API key 做三家 adapter 的 live smoke 驗證（含 Gemini 無效金鑰錯誤碼）。","tags":["milestone","decision","handover"],"archivedAt":"2026-10-28","archivedFrom":"room:web-ui-rest-api-llm","archiveNote":"v0.5 拆分複合 handover 記錄：v0.4 組成見 app/README.md、JSON 遷移見 archive/markdown-original/、預算語意見 architecture §2；「下一步：live smoke」已過時；「成果 commit 不需單號」轉為 keep 提案。"},
+    {"id":"d3mauh5i","date":"2026-07-06","confidence":"high","source":"user","fact":"框架規格與 skill 以英文為權威；城堡實例檔案整份繁體中文（記憶宮殿是給人看的）；對使用者的回覆一律繁體中文。","tags":["constraint"],"archivedAt":"2026-10-28","archivedFrom":"keep","archiveNote":"merged into 8zkcihx3"},
+    {"id":"pigybfa5","date":"2026-07-08","confidence":"high","source":"user","fact":"使用者指示：castle 記錄內文全程使用繁體中文。既有英文記錄已翻譯為繁中；英文原文完整保存於 archive\\chronicle-2026-07-en-original.md。","tags":["decision"],"archivedAt":"2026-10-28","archivedFrom":"keep","archiveNote":"merged into 8zkcihx3"},
+    {"id":"gglomkz2","date":"2026-07-08","confidence":"high","source":"user","fact":"使用者加碼指示：不只記錄行，生成的城堡檔案（keep／chronicle／routes／rooms）整份繁體中文——記憶宮殿是給人看的。模板、實例、腳本訊息全面改版；只有結構識別鍵（locus:、路線名、格式骨架、tag）保持英文。","tags":["decision"],"archivedAt":"2026-10-28","archivedFrom":"keep","archiveNote":"merged into 8zkcihx3"}
+  ]
+}
